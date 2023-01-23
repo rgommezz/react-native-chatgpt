@@ -11,6 +11,7 @@ import { WebView } from 'react-native-webview';
 import {
   CHAT_PAGE,
   ChatGpt3Response,
+  ChatGPTError,
   HOST_URL,
   LOGIN_PAGE,
   parseStreamBasedResponse,
@@ -28,6 +29,13 @@ type WebViewEvents =
   | {
       type: 'RAW_PARTIAL_RESPONSE';
       payload: string;
+    }
+  | {
+      type: 'STREAM_ERROR';
+      payload: {
+        status: number;
+        statusText: string;
+      };
     };
 
 type MessageOptions = {
@@ -39,6 +47,7 @@ interface PartialResponseArgs {
   message: string;
   options?: MessageOptions;
   onPartialResponse?: (arg: ChatGpt3Response) => void;
+  onError?: (arg: ChatGPTError) => void;
 }
 
 interface ChatGpt3ContextInterface {
@@ -66,6 +75,7 @@ export default function ChatGpt3({
   const [accessToken, setAccessToken] = useState('');
   const [webViewVisible, setWebViewVisible] = useState(false);
   const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
+  const errorCallbackRef = useRef<(arg: ChatGPTError) => void>(() => null);
 
   const login = () => {
     setWebViewVisible(true);
@@ -90,10 +100,11 @@ export default function ChatGpt3({
           });
         }
 
-        const { message, options, onPartialResponse } = args[0];
+        const { message, options, onPartialResponse, onError } = args[0];
 
         if (onPartialResponse) {
           callbackRef.current = onPartialResponse;
+          errorCallbackRef.current = onError || (() => null);
 
           const runJavaScript = `
             window.sendGptMessage({
@@ -207,7 +218,9 @@ export default function ChatGpt3({
           credentials: "include"
         });
 
-
+        if (res.status >= 400 && res.status < 600) {
+          return window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, message: res.statusText}}));
+        }
 
         for await (const chunk of streamAsyncIterable(res.body)) {
           const str = new TextDecoder().decode(chunk);
@@ -275,6 +288,13 @@ export default function ChatGpt3({
                   if (result) {
                     callbackRef.current?.(result);
                   }
+                }
+                if (type === 'STREAM_ERROR') {
+                  const error = new ChatGPTError(
+                    payload?.statusText || 'Unknown error'
+                  );
+                  error.statusCode = payload?.status;
+                  errorCallbackRef.current?.(error);
                 }
               } catch (e) {
                 console.log('error', e);
