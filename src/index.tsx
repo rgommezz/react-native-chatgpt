@@ -1,3 +1,5 @@
-export function multiply(a: number, b: number): Promise<number> {
-  return Promise.resolve(a * b);
-}
+import ChatGpt3, { useChatGpt3 } from './ChatGpt3';
+
+export default ChatGpt3;
+
+export { useChatGpt3 };
