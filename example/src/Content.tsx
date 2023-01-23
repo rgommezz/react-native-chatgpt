@@ -15,8 +15,11 @@ const Content = () => {
 
   const postStreamBasedMessage = async () => {
     setResponse('...');
-    sendMessage('Who is Jeff Bezos?', undefined, (partial) => {
-      setResponse(partial.message);
+    sendMessage({
+      message: 'Who is Jeff Bezos?',
+      onPartialResponse: (partial) => {
+        setResponse(partial.message);
+      },
     });
   };
   return (
@@ -32,9 +35,17 @@ const Content = () => {
         style={{ marginBottom: 24, flexDirection: 'row', alignItems: 'center' }}
       >
         <View style={{ marginRight: 32 }}>
-          <Button title={'Normal Message'} onPress={postMessage} />
+          <Button
+            title={'Normal Message'}
+            onPress={postMessage}
+            disabled={response === '...'}
+          />
         </View>
-        <Button title={'Stream message'} onPress={postStreamBasedMessage} />
+        <Button
+          title={'Stream message'}
+          onPress={postStreamBasedMessage}
+          disabled={response === '...'}
+        />
       </View>
       <Text style={{ marginBottom: 24 }}>Response: {response}</Text>
     </View>

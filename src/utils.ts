@@ -14,6 +14,11 @@ export const LOGIN_PAGE = `${HOST_URL}/auth/login`;
 export const PROMPT_ENDPOINT = `${HOST_URL}/backend-api/conversation`;
 export const LOGIN_SUCCESS_PAGE = `${HOST_URL}/api/auth/callback`;
 
+export class ChatGPTError extends Error {
+  statusCode?: number;
+  originalError?: Error;
+}
+
 // We have to set a user agent to bypass Google security. Google login is not supported by webviews.
 // By setting the user agent we trick Google into thinking we are using the Chrome mobile browser.
 // The user agent is obtained from https://user-agents.net/string/mozilla-5-0-iphone-cpu-iphone-os-10-3-like-mac-os-x-applewebkit-602-1-50-khtml-like-gecko-crios-90-0-2924-75-mobile-14e5239e-safari-602-1
@@ -118,11 +123,23 @@ export async function sendMessage({
     headers: getHeaders(accessToken),
     mode: 'cors',
   });
+
+  if (res.status >= 400 && res.status < 500) {
+    const error = new ChatGPTError('Client error');
+    error.statusCode = res.status;
+    throw error;
+  } else if (res.status >= 500) {
+    // Server error
+    const error = new ChatGPTError('Server error');
+    error.statusCode = res.status;
+    throw error;
+  }
+
   const rawText = await res.text();
   const parsedData = parseStreamBasedResponse(rawText);
 
   if (!parsedData) {
-    throw new Error('Error: could not parse response');
+    throw new ChatGPTError('ChatGPT raw text response, parse error');
   }
 
   return parsedData;

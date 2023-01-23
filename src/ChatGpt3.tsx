@@ -12,6 +12,7 @@ import {
   CHAT_PAGE,
   ChatGpt3Response,
   HOST_URL,
+  LOGIN_PAGE,
   parseStreamBasedResponse,
   PROMPT_ENDPOINT,
   sendMessage,
@@ -34,14 +35,20 @@ type MessageOptions = {
   messageId?: string;
 };
 
+interface PartialResponseArgs {
+  message: string;
+  options?: MessageOptions;
+  onPartialResponse?: (arg: ChatGpt3Response) => void;
+}
+
 interface ChatGpt3ContextInterface {
   accessToken: string;
   login: () => void;
-  sendMessage: (
+  sendMessage(
     message: string,
-    options?: MessageOptions,
-    partialResponseCb?: (arg: ChatGpt3Response) => void
-  ) => Promise<ChatGpt3Response>;
+    options?: MessageOptions
+  ): Promise<ChatGpt3Response>;
+  sendMessage(args: PartialResponseArgs): void;
 }
 
 const ChatGpt3Context = createContext<ChatGpt3ContextInterface>(
@@ -57,12 +64,12 @@ export default function ChatGpt3({
 }) {
   const webviewRef = useRef<WebView>(null);
   const [accessToken, setAccessToken] = useState('');
-  const [webViewVisible, setWebViewVisible] = useState(true);
+  const [webViewVisible, setWebViewVisible] = useState(false);
   const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
 
   const login = () => {
-    // webviewRef.current?.reload();
     setWebViewVisible(true);
+    setAccessToken('');
   };
 
   const contextValue = useMemo(
@@ -70,11 +77,11 @@ export default function ChatGpt3({
       accessToken,
       login,
       sendMessage: (
-        message: string,
-        options?: MessageOptions,
-        partialResponseCb?: (arg: ChatGpt3Response) => void
+        ...args: [PartialResponseArgs] | [string, MessageOptions?]
       ) => {
-        if (!partialResponseCb) {
+        if (typeof args[0] === 'string') {
+          const message = args[0];
+          const options = args[1];
           return sendMessage({
             accessToken,
             message,
@@ -83,21 +90,27 @@ export default function ChatGpt3({
           });
         }
 
-        callbackRef.current = partialResponseCb;
+        const { message, options, onPartialResponse } = args[0];
 
-        const runJavaScript = `
-          window.sendGptMessage({
-            accessToken: "${accessToken}",
-            message: "${message}",
-            messageId: "${options?.messageId || uuid.v4()}",
-            conversationId: "${options?.conversationId || uuid.v4()}"
-          });
+        if (onPartialResponse) {
+          callbackRef.current = onPartialResponse;
 
-          true;
-      `;
+          const runJavaScript = `
+            window.sendGptMessage({
+              accessToken: "${accessToken}",
+              message: "${message}",
+              messageId: "${options?.messageId || uuid.v4()}",
+              conversationId: "${options?.conversationId || uuid.v4()}"
+            });
 
-        // Stream based response
-        webviewRef.current?.injectJavaScript(runJavaScript);
+            true;
+          `;
+
+          // Stream based response
+          webviewRef.current?.injectJavaScript(runJavaScript);
+          return undefined;
+        }
+
         return;
       },
     }),
@@ -194,6 +207,8 @@ export default function ChatGpt3({
           credentials: "include"
         });
 
+
+
         for await (const chunk of streamAsyncIterable(res.body)) {
           const str = new TextDecoder().decode(chunk);
           window.ReactNativeWebView.postMessage(JSON.stringify({type: 'RAW_PARTIAL_RESPONSE', payload: str}));
@@ -208,7 +223,7 @@ export default function ChatGpt3({
 
   return (
     <View style={{ flex: 1 }}>
-      {/** @ts-ignore */}
+      {/* @ts-ignore */}
       <ChatGpt3Context.Provider value={contextValue}>
         <View
           style={[
@@ -226,10 +241,11 @@ export default function ChatGpt3({
             injectedJavaScriptBeforeContentLoaded={runFirst}
             ref={webviewRef}
             style={{ flex: 1, backgroundColor: 'white' }}
-            source={{ uri: CHAT_PAGE }}
+            source={{ uri: webViewVisible ? LOGIN_PAGE : CHAT_PAGE }}
             onNavigationStateChange={(event) => {
               if (event.url === CHAT_PAGE && event.loading) {
-                // We have successfully logged in or we were already logged in. We can hide the webview now.
+                // We have successfully logged in, or we were already logged in.
+                // We can hide the webview now.
                 setWebViewVisible(false);
               }
             }}
@@ -242,7 +258,7 @@ export default function ChatGpt3({
                 ) as WebViewEvents;
                 if (type === 'REQUEST_INTERCEPTED_CONFIG') {
                   if (accessToken) {
-                    // We already have the access token
+                    // We already have the access token, no need to do anything
                     return;
                   }
                   if (Object.keys(payload)) {
@@ -251,7 +267,6 @@ export default function ChatGpt3({
                     if (headers && 'Authorization' in headers) {
                       const authToken = headers?.Authorization;
                       setAccessToken(authToken as string);
-                      console.log(authToken);
                     }
                   }
                 }
