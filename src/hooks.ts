@@ -1,13 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Animated, Dimensions } from 'react-native';
-
-export function usePrevious<T>(value: T): T {
-  const ref: any = useRef<T>();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
-}
 
 interface Arguments {
   onAnimationStart?: (mode: 'hide' | 'show') => void;
@@ -33,6 +25,10 @@ export function useWebViewAnimation({
     inputRange: [0, 0.01, 0.02, 1],
     outputRange: [0, 0, 1, 1],
   });
+  const backdropOpacity = animatedValue.current.interpolate({
+    inputRange: [0, 0.8, 1],
+    outputRange: [0, 0.5, 0.5],
+  });
 
   const animateWebView = (mode: 'hide' | 'show') => {
     onAnimationStart?.(mode);
@@ -47,8 +43,13 @@ export function useWebViewAnimation({
 
   return {
     animatedStyles: {
-      opacity,
-      transform: [{ translateY }, { scale }],
+      webview: {
+        opacity,
+        transform: [{ translateY }, { scale }],
+      },
+      backdrop: {
+        opacity: backdropOpacity,
+      },
     },
     animateWebView,
   };

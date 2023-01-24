@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { useAppState } from '@react-native-community/hooks';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { useAppState } from '@react-native-community/hooks';
+import { Animated, StyleSheet, View } from 'react-native';
 import { injectJavaScriptIntoWebViewBeforeIsLoaded } from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
 import { ChatGpt3Response, ChatGPTError, WebViewEvents } from './types';
 import { parseStreamBasedResponse, wait } from './utils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { usePrevious, useWebViewAnimation } from './hooks';
+import { useWebViewAnimation } from './hooks';
 
 interface Props {
   accessToken: string;
@@ -37,7 +37,6 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     const [status, setStatus] = useState<'hidden' | 'animating' | 'visible'>(
       'hidden'
     );
-    const prevStatus = usePrevious(status);
 
     const { animatedStyles, animateWebView } = useWebViewAnimation({
       onAnimationStart: () => setStatus('animating'),
@@ -47,18 +46,9 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
 
     useImperativeHandle(ref, () => ({
       open: () => {
-        setStatus('animating');
+        animateWebView('show');
       },
     }));
-
-    useEffect(() => {
-      if (prevStatus === 'hidden' && status === 'animating') {
-        animateWebView('show');
-      } else if (prevStatus === 'visible' && status === 'animating') {
-        animateWebView('hide');
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [prevStatus, status]);
 
     useEffect(() => {
       if (status === 'visible') {
@@ -91,83 +81,94 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     }
 
     async function reloadAndCheckCapacityAgain() {
+      await wait(2000);
       webviewRef.current?.reload();
-      await wait(5000);
+      await wait(3000);
       checkIfChatGPTIsAtFullCapacity();
     }
 
     return (
-      <Animated.View style={[styles.container, animatedStyles]}>
-        <RNWebView
-          injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
-          ref={webviewRef}
-          style={styles.webview}
-          source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
-          onNavigationStateChange={(event) => {
-            if (event.url.startsWith(CHAT_PAGE) && event.loading) {
-              // We have successfully logged in, or we were already logged in.
-              // We can hide the webview now.
-              if (status === 'visible') {
-                setStatus('animating');
+      <>
+        <Animated.View style={[styles.container, animatedStyles.webview]}>
+          <RNWebView
+            injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
+            ref={webviewRef}
+            style={styles.webview}
+            source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
+            onNavigationStateChange={(event) => {
+              if (event.url.startsWith(CHAT_PAGE) && event.loading) {
+                // We have successfully logged in, or we were already logged in.
+                // We can hide the webview now.
+                if (status === 'visible') {
+                  animateWebView('hide');
+                }
               }
-            }
-          }}
-          userAgent={USER_AGENT}
-          sharedCookiesEnabled
-          onMessage={(event) => {
-            try {
-              const { payload, type } = JSON.parse(
-                event.nativeEvent.data
-              ) as WebViewEvents;
-              if (type === 'REQUEST_INTERCEPTED_CONFIG') {
-                if (Object.keys(payload)) {
-                  // We have headers
-                  const { headers } = payload;
-                  if (headers && 'Authorization' in headers) {
-                    const newAuthToken = headers?.Authorization;
-                    if (!!newAuthToken && newAuthToken !== accessToken) {
-                      onAccessTokenChange(newAuthToken);
+            }}
+            userAgent={USER_AGENT}
+            sharedCookiesEnabled
+            onMessage={(event) => {
+              try {
+                const { payload, type } = JSON.parse(
+                  event.nativeEvent.data
+                ) as WebViewEvents;
+                if (type === 'REQUEST_INTERCEPTED_CONFIG') {
+                  if (Object.keys(payload)) {
+                    // We have headers
+                    const { headers } = payload;
+                    if (headers && 'Authorization' in headers) {
+                      const newAuthToken = headers?.Authorization;
+                      if (!!newAuthToken && newAuthToken !== accessToken) {
+                        onAccessTokenChange(newAuthToken);
+                      }
                     }
                   }
                 }
-              }
-              if (type === 'RAW_PARTIAL_RESPONSE') {
-                const result = parseStreamBasedResponse(payload);
-                if (result) {
-                  onPartialResponse(result);
+                if (type === 'RAW_PARTIAL_RESPONSE') {
+                  const result = parseStreamBasedResponse(payload);
+                  if (result) {
+                    onPartialResponse(result);
+                  }
                 }
+                if (type === 'GPT3_FULL_CAPACITY' && status === 'visible') {
+                  // Reload the page to check if it's available again.
+                  reloadAndCheckCapacityAgain();
+                }
+                if (type === 'STREAM_ERROR') {
+                  const error = new ChatGPTError(
+                    payload?.statusText ||
+                      `ChatGPTResponseStreamError: ${payload?.status}`
+                  );
+                  error.statusCode = payload?.status;
+                  onStreamError(error);
+                }
+              } catch (e) {
+                // Ignore errors here
               }
-              if (type === 'GPT3_FULL_CAPACITY') {
-                // Reload the page to check if it's available again.
-                reloadAndCheckCapacityAgain();
-              }
-              if (type === 'STREAM_ERROR') {
-                const error = new ChatGPTError(
-                  payload?.statusText ||
-                    `ChatGPTResponseStreamError: ${payload?.status}`
-                );
-                error.statusCode = payload?.status;
-                onStreamError(error);
-              }
-            } catch (e) {
-              // Ignore errors here
-            }
-          }}
-        />
-        <View style={styles.closeButton}>
-          <Icon
-            name="close"
-            color="black"
-            size={24}
-            onPress={() => setStatus('animating')}
+            }}
           />
-        </View>
-      </Animated.View>
+          <View style={styles.closeButton}>
+            <Icon
+              name="close"
+              color="black"
+              size={32}
+              onPress={() => animateWebView('hide')}
+            />
+          </View>
+        </Animated.View>
+        <Animated.View
+          style={[styles.backdrop, animatedStyles.backdrop]}
+          pointerEvents="none"
+        />
+      </>
     );
   }
 );
 
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   container: {
     position: 'absolute',
     // Needed for Android to be on top of everything else
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 96,
     borderRadius: 16,
-    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+    overflow: 'hidden',
     flex: 1,
     shadowColor: 'black',
     shadowOffset: {
