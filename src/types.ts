@@ -42,4 +42,5 @@ export type WebViewEvents =
         status: number;
         statusText: string;
       };
-    };
+    }
+  | { type: 'GPT3_FULL_CAPACITY'; payload: null };

@@ -5,7 +5,7 @@ import { injectJavaScriptIntoWebViewBeforeIsLoaded } from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
 import { ChatGpt3Response, ChatGPTError, WebViewEvents } from './types';
-import { parseStreamBasedResponse } from './utils';
+import { parseStreamBasedResponse, wait } from './utils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { usePrevious, useWebViewAnimation } from './hooks';
 
@@ -58,6 +58,33 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [prevStatus, status]);
 
+    useEffect(() => {
+      if (status === 'visible') {
+        // Check if the page shown is ChatGPT3 is at full capacity.
+        // If it is, we can reload the page at intervals to check if it's available again.
+        checkIfChatGPTIsAtFullCapacity();
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
+
+    function checkIfChatGPTIsAtFullCapacity() {
+      const script = `
+        const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
+        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        if (element) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'GPT3_FULL_CAPACITY' }));
+        }
+      `;
+      webviewRef.current?.injectJavaScript(script);
+    }
+
+    async function reloadAndCheckCapacityAgain() {
+      await wait(2000);
+      webviewRef.current?.reload();
+      await wait(500);
+      checkIfChatGPTIsAtFullCapacity();
+    }
+
     return (
       <Animated.View style={[styles.container, animatedStyles]}>
         <RNWebView
@@ -98,6 +125,10 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 if (result) {
                   onPartialResponse(result);
                 }
+              }
+              if (type === 'GPT3_FULL_CAPACITY') {
+                // Reload the page to check if it's available again.
+                reloadAndCheckCapacityAgain();
               }
               if (type === 'STREAM_ERROR') {
                 const error = new ChatGPTError(

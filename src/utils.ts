@@ -62,3 +62,7 @@ export function parseStreamBasedResponse(data: string) {
     isDone: response.message?.end_turn === true,
   };
 }
+
+export function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
