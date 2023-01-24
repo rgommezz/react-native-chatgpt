@@ -1,5 +1,5 @@
 {
-  "name": "react-native-chatgpt3",
+  "name": "react-native-chatgpt",
   "version": "0.2.0",
   "description": "test",
   "main": "lib/commonjs/index",
@@ -40,13 +40,13 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/rgommezz/react-native-chatgpt3",
+  "repository": "https://github.com/rgommezz/react-native-chatgpt",
   "author": "rgommezz <rauliyohmc@gmail.com> (https://github.com/rgommezz)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rgommezz/react-native-chatgpt3/issues"
+    "url": "https://github.com/rgommezz/react-native-chatgpt/issues"
   },
-  "homepage": "https://github.com/rgommezz/react-native-chatgpt3#readme",
+  "homepage": "https://github.com/rgommezz/react-native-chatgpt#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

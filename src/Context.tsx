@@ -1,5 +1,5 @@
 import type {
-  ChatGpt3Response,
+  ChatGptResponse,
   SendMessageOptions,
   StreamMessageParams,
 } from './types';
@@ -10,27 +10,27 @@ import React, {
   useMemo,
 } from 'react';
 
-interface ChatGpt3ContextInterface {
+interface ChatGptContextInterface {
   accessToken: string;
   login: () => void;
   sendMessage(
     message: string,
     options?: SendMessageOptions
-  ): Promise<ChatGpt3Response>;
+  ): Promise<ChatGptResponse>;
   sendMessage(args: StreamMessageParams): void;
 }
 
-const ChatGpt3Context = createContext<ChatGpt3ContextInterface>(
-  undefined as unknown as ChatGpt3ContextInterface
+const ChatGptContext = createContext<ChatGptContextInterface>(
+  undefined as unknown as ChatGptContextInterface
 );
 
 interface Props {
   accessToken: string;
   login: () => void;
-  sendMessage: ChatGpt3ContextInterface['sendMessage'];
+  sendMessage: ChatGptContextInterface['sendMessage'];
 }
 
-export const ChatGpt3Provider = ({
+export const ChatGptProvider = ({
   accessToken,
   login,
   sendMessage,
@@ -46,10 +46,16 @@ export const ChatGpt3Provider = ({
   );
 
   return (
-    <ChatGpt3Context.Provider value={contextValue}>
+    <ChatGptContext.Provider value={contextValue}>
       {children}
-    </ChatGpt3Context.Provider>
+    </ChatGptContext.Provider>
   );
 };
 
-export const useChatGpt3 = () => useContext(ChatGpt3Context);
+export const useChatGpt = () => {
+  const context = useContext(ChatGptContext);
+  if (!context) {
+    throw new Error('useChatGpt must be used within a ChatGptProvider');
+  }
+  return context;
+};

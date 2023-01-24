@@ -1,7 +1,7 @@
 import uuid from 'react-native-uuid';
 import {
-  ChatGpt3Response,
-  ChatGPTError,
+  ChatGptResponse,
+  ChatGptError,
   SendMessageOptions,
   SendMessageParams,
 } from './types';
@@ -9,8 +9,8 @@ import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from './constants';
 import { getHeaders, parseStreamBasedResponse } from './utils';
 
 /**
- * Monkey patches fetch to intercept ChatGPT3 requests and read the JWT
- * It also injects a method in the global scope to send messages to the ChatGPT3 backend
+ * Monkey patches fetch to intercept ChatGPT requests and read the JWT
+ * It also injects a method in the global scope to send messages to the ChatGPT backend
  * directly from the Webview and stream the response back to RN
  *
  * Note: It'd be cool to define the function in normal JS and
@@ -130,7 +130,7 @@ export async function postMessage({
   message,
   messageId = uuid.v4() as string,
   conversationId = uuid.v4() as string,
-}: SendMessageParams): Promise<ChatGpt3Response> {
+}: SendMessageParams): Promise<ChatGptResponse> {
   const url = PROMPT_ENDPOINT;
   const body = {
     action: 'next',
@@ -156,15 +156,15 @@ export async function postMessage({
   });
 
   if (res.status >= 400 && res.status < 500) {
-    const error = new ChatGPTError(
-      res.status === 403
+    const error = new ChatGptError(
+      res.status === 403 || res.status === 401
         ? 'ChatGPTResponseClientError: Your access token may have expired. Please login again.'
         : `ChatGPTResponseClientError: ${res.status} ${res.statusText}`
     );
     error.statusCode = res.status;
     throw error;
   } else if (res.status >= 500) {
-    const error = new ChatGPTError(
+    const error = new ChatGptError(
       `ChatGPTResponseServerError: ${res.status} ${res.statusText}`
     );
     error.statusCode = res.status;
@@ -175,18 +175,18 @@ export async function postMessage({
   const parsedData = parseStreamBasedResponse(rawText);
 
   if (!parsedData) {
-    throw new ChatGPTError('ChatGPTResponseError: Unable to parse response');
+    throw new ChatGptError('ChatGPTResponseError: Unable to parse response');
   }
 
   return parsedData;
 }
 
-export function checkIfChatGPTIsAtFullCapacityScript() {
+export function checkIfChatGptIsAtFullCapacityScript() {
   return `
     const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
     if (element) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'GPT3_FULL_CAPACITY' }));
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHAT_GPT_FULL_CAPACITY' }));
     }
 
     true;

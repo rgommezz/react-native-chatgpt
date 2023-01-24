@@ -1,20 +1,20 @@
-export interface ChatGpt3Response {
+export interface ChatGptResponse {
   message: string;
   messageId: string;
   conversationId: string;
   isDone?: boolean;
 }
 
-export class ChatGPTError extends Error {
+export class ChatGptError extends Error {
   statusCode?: number;
   originalError?: Error;
 }
 
 export interface StreamMessageParams {
   message: string;
+  onPartialResponse: (arg: ChatGptResponse) => void;
   options?: SendMessageOptions;
-  onPartialResponse?: (arg: ChatGpt3Response) => void;
-  onError?: (arg: ChatGPTError) => void;
+  onError?: (arg: ChatGptError) => void;
 }
 
 export type SendMessageOptions = {
@@ -43,4 +43,4 @@ export type WebViewEvents =
         statusText: string;
       };
     }
-  | { type: 'GPT3_FULL_CAPACITY'; payload: null };
+  | { type: 'CHAT_GPT_FULL_CAPACITY'; payload: null };

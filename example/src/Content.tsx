@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import { useChatGpt3 } from 'react-native-chatgpt3';
+import { useChatGpt } from 'react-native-chatgpt';
 import { useState } from 'react';
 
 const Content = () => {
-  const { login, sendMessage, accessToken } = useChatGpt3();
+  const { login, sendMessage, accessToken } = useChatGpt();
   const [response, setResponse] = useState('');
 
   const postMessage = async () => {
@@ -13,7 +13,7 @@ const Content = () => {
     setResponse(gpt3Response.message);
   };
 
-  const postStreamBasedMessage = async () => {
+  const postStreamBasedMessage = () => {
     setResponse('...');
     sendMessage({
       message: 'Who is Jeff Bezos?',
@@ -22,6 +22,7 @@ const Content = () => {
       },
     });
   };
+
   return (
     <View style={styles.container}>
       <Text style={{ marginBottom: 24 }}>ChatGPT3 Sandbox</Text>

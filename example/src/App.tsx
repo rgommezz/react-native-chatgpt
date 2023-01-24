@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { ChatGpt3Provider } from 'react-native-chatgpt3';
+import { ChatGptProvider } from 'react-native-chatgpt';
 import Content from './Content';
 
 export default function App() {
   return (
-    <ChatGpt3Provider>
+    <ChatGptProvider>
       <Content />
-    </ChatGpt3Provider>
+    </ChatGptProvider>
   );
 }

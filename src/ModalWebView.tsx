@@ -9,12 +9,12 @@ import {
 import { useAppState } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
-  checkIfChatGPTIsAtFullCapacityScript,
+  checkIfChatGptIsAtFullCapacityScript,
   injectJavaScriptIntoWebViewBeforeIsLoaded,
 } from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
-import { ChatGpt3Response, ChatGPTError, WebViewEvents } from './types';
+import { ChatGptResponse, ChatGptError, WebViewEvents } from './types';
 import { parseStreamBasedResponse, wait } from './utils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useWebViewAnimation } from './hooks';
@@ -23,8 +23,8 @@ interface PassedProps {
   accessToken: string;
   webviewRef: React.RefObject<RNWebView>;
   onAccessTokenChange: (newAccessToken: string) => void;
-  onPartialResponse: (response: ChatGpt3Response) => void;
-  onStreamError: (error: ChatGPTError) => void;
+  onPartialResponse: (response: ChatGptResponse) => void;
+  onStreamError: (error: ChatGptError) => void;
 }
 
 export interface PublicProps {
@@ -72,9 +72,9 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
 
     useEffect(() => {
       if (status === 'visible') {
-        // Check if the page shown is ChatGPT3 is at full capacity.
+        // Check if the page shown is ChatGPT is at full capacity.
         // If it is, we can reload the page at intervals to check if it's available again.
-        checkIfChatGPTIsAtFullCapacity();
+        checkIfChatGptIsAtFullCapacity();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]);
@@ -87,8 +87,8 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       }
     }, [currentAppState, webviewRef]);
 
-    function checkIfChatGPTIsAtFullCapacity() {
-      const script = checkIfChatGPTIsAtFullCapacityScript();
+    function checkIfChatGptIsAtFullCapacity() {
+      const script = checkIfChatGptIsAtFullCapacityScript();
       webviewRef.current?.injectJavaScript(script);
     }
 
@@ -96,7 +96,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       await wait(2000);
       webviewRef.current?.reload();
       await wait(3000);
-      checkIfChatGPTIsAtFullCapacity();
+      checkIfChatGptIsAtFullCapacity();
     }
 
     function closeModal() {
@@ -147,12 +147,12 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                     onPartialResponse(result);
                   }
                 }
-                if (type === 'GPT3_FULL_CAPACITY' && status === 'visible') {
+                if (type === 'CHAT_GPT_FULL_CAPACITY' && status === 'visible') {
                   // Reload the page to check if it's available again.
                   reloadAndCheckCapacityAgain();
                 }
                 if (type === 'STREAM_ERROR') {
-                  const error = new ChatGPTError(
+                  const error = new ChatGptError(
                     payload?.statusText ||
                       `ChatGPTResponseStreamError: ${payload?.status}`
                   );

@@ -2,16 +2,16 @@ import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { WebView as RNWebView } from 'react-native-webview';
 import type {
-  ChatGpt3Response,
-  ChatGPTError,
+  ChatGptResponse,
+  ChatGptError,
   SendMessageOptions,
   StreamMessageParams,
 } from './types';
-import { ChatGpt3Provider } from './Context';
+import { ChatGptProvider } from './Context';
 import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
 import { getPostMessageWithStreamScript, postMessage } from './api';
 
-export default function ChatGpt3({
+export default function ChatGpt({
   containerStyles,
   backdropStyles,
   renderCustomCloseIcon,
@@ -19,8 +19,8 @@ export default function ChatGpt3({
 }: PropsWithChildren<PublicProps>) {
   const webviewRef = useRef<RNWebView>(null);
   const modalRef = useRef<ModalWebViewMethods>(null);
-  const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
-  const errorCallbackRef = useRef<(arg: ChatGPTError) => void>(() => null);
+  const callbackRef = useRef<(arg: ChatGptResponse) => void>(() => null);
+  const errorCallbackRef = useRef<(arg: ChatGptError) => void>(() => null);
 
   const [accessToken, setAccessToken] = useState('');
 
@@ -31,7 +31,7 @@ export default function ChatGpt3({
   function sendMessage(
     message: string,
     options?: SendMessageOptions
-  ): Promise<ChatGpt3Response>;
+  ): Promise<ChatGptResponse>;
   function sendMessage(args: StreamMessageParams): void;
   function sendMessage(
     ...args: [StreamMessageParams] | [string, SendMessageOptions?]
@@ -74,7 +74,7 @@ export default function ChatGpt3({
 
   return (
     <View style={styles.flex}>
-      <ChatGpt3Provider
+      <ChatGptProvider
         accessToken={accessToken}
         login={login}
         sendMessage={memoizedSendMessage}
@@ -91,7 +91,7 @@ export default function ChatGpt3({
           renderCustomCloseIcon={renderCustomCloseIcon}
         />
         {children}
-      </ChatGpt3Provider>
+      </ChatGptProvider>
     </View>
   );
 }
