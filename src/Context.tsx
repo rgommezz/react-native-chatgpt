@@ -1,5 +1,6 @@
 import type {
   ChatGpt3Response,
+  ChatGPTError,
   SendMessageOptions,
   StreamMessageParams,
 } from './types';
@@ -7,11 +8,13 @@ import React, {
   createContext,
   MutableRefObject,
   PropsWithChildren,
+  RefObject,
   useContext,
   useMemo,
 } from 'react';
 import { sendMessage } from './api';
 import uuid from 'react-native-uuid';
+import type WebView from 'react-native-webview';
 
 interface ChatGpt3ContextInterface {
   accessToken: string;
@@ -30,9 +33,9 @@ const ChatGpt3Context = createContext<ChatGpt3ContextInterface>(
 interface Props {
   accessToken: string;
   login: () => void;
-  callbackRef: MutableRefObject<undefined | ((data: any) => void)>;
-  errorCallbackRef: MutableRefObject<undefined | ((data: any) => void)>;
-  webviewRef: MutableRefObject<undefined | any>;
+  callbackRef: MutableRefObject<(arg: ChatGpt3Response) => void>;
+  errorCallbackRef: MutableRefObject<(arg: ChatGPTError) => void>;
+  webviewRef: RefObject<WebView>;
 }
 
 export const ChatGpt3Provider = ({
