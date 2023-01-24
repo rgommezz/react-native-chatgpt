@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useAppState } from '@react-native-community/hooks';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { injectJavaScriptIntoWebViewBeforeIsLoaded } from './api';
@@ -32,6 +33,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     },
     ref
   ) => {
+    const currentAppState = useAppState();
     const [status, setStatus] = useState<'hidden' | 'animating' | 'visible'>(
       'hidden'
     );
@@ -66,6 +68,14 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]);
+
+    useEffect(() => {
+      // Every time the app is brought to the foreground,
+      // we reload the webview to avoid 403s from Cloudfare on the chat screen
+      if (currentAppState === 'active') {
+        webviewRef.current?.reload();
+      }
+    }, [currentAppState, webviewRef]);
 
     function checkIfChatGPTIsAtFullCapacity() {
       const script = `

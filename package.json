@@ -163,6 +163,7 @@
     ]
   },
   "dependencies": {
+    "@react-native-community/hooks": "^2.8.1",
     "date-fns": "^2.29.3",
     "react-native-uuid": "^2.0.1"
   }
