@@ -24,7 +24,7 @@
 - **:fire: Serverless**: no need to use a custom backend to send messages to the chatbot
 - **:zap: Streaming support**: get a response as soon as it's available, similar to the ChatGPT web playground
 - **:speaking_head: Contextual**: keep track of the conversation by sending the `conversationId` and `messageId` along with the message
-- **:atom_symbol: Cross platform**: works in iOS, Android and Web
+- **:atom_symbol: Cross platform**: works on iOS, Android and Web
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
 - **:hammer_and_wrench: Type safe**: fully written in TS
 - **:computer: Snack example**: a snack link is provided, so you can try it out in your browser
