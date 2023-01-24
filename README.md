@@ -5,7 +5,19 @@
 ![platforms: ios, android, web](https://img.shields.io/badge/platform-ios%2C%20android-blue)
 [![license MIT](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/rgommezz/react-native-chatgpt/blob/master/LICENSE)
 
- <p><i>This library allows you to access ChatGPT from React Native, so you can integrate it with your own applications. <b>It handles authentication, streamed responses and contextual conversations</b>. Fully serverless.</i></p>
+ <p><i>This library allows you to access <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> from React Native to integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
+ 
+- [Features](#features)
+- [Disclaimer](#disclaimer)
+- [Try it out](#try-it-out)
+- [Installation](#installation)
+- [API](#api)
+  - [`ChatGptProvider`](#chatgptprovider)
+  - [`useChatGpt`](#usechatgpt)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [License](#license)
+
 
 ## Features
 
@@ -19,7 +31,7 @@
 
 ## Disclaimer
 
-This is not an official ChatGPT library. It's an effort to make it easier to integrate ChatGPT with React Native applications. As such, please treat it as experimental and use with caution in production :wink:.
+This is not an official ChatGPT library. It's an effort to make it easier to integrate ChatGPT with React Native applications. As such, please treat it as experimental and use it with caution in production :wink:.
 
 ## Try it out
 
@@ -37,14 +49,14 @@ You also need to install `react-native-webview` and `react-native-vector-icons`;
 npm install react-native-webview react-native-vector-icons
 ```
 
-## Additional instructions for bare React Native apps
+### Additional instructions for bare React Native apps
 
-If you are installing `react-native-webview` and `react-native-vector-icons` on a bare React Native app, you should also follow their additional installation instructions. If using expo, you can skip this step.
+If you are developing a bare React Native app, you should also follow some additional installation instructions to set up `react-native-webview` and `react-native-vector-icons` properly. If using [Expo](https://docs.expo.dev/), you can skip this step.
 
 - [react-native-webview](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Getting-Started.md)
 - [react-native-vector-icons](https://github.com/oblador/react-native-vector-icons#installation)
 
-## Usage
+## API
 
 This library exports a provider component and a hook as its main API.
 
@@ -52,7 +64,7 @@ This library exports a provider component and a hook as its main API.
 
 The provider component should be placed **at the root of your React Native application** as shown in the example below:
 
-```tsx
+```jsx
 import { ChatGptProvider } from 'react-native-chatgpt';
 import App from './App';
 
@@ -73,7 +85,7 @@ The following `ChatGptProvider` props allow you to customize the appearance of t
 | ----------------------- | -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `containerStyles`       | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the webview container                                                                                                                                                                                         |
 | `backdropStyles`        | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                               |
-| `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
+| `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default, it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
 
 ### `useChatGpt`
 
@@ -85,9 +97,13 @@ The hook returns an object with the following properties:
 function login(): void;
 ```
 
-A function to open the modal and trigger the login flow. After completion, you will get a JWT access token. This access token has an expiration date of 7 days since it was issued.
-It's important to note that this library has no control over the token expiration and there is no refresh token available.
-The simplest way to proceed is to listen to `401` or `403` server errors when sending messages and call `login` again once that happens to get a new JWT token.
+A function that, when executed, opens the modal and triggers the ChatGPT auth flow.
+
+After completion, you will get a JWT access token. This access token has an expiration date of 7 days since it was issued.
+
+It's important to note that this library has no control over the token expiration, and no refresh token is available.
+
+The simplest way to proceed is to listen to `401` or `403` server errors when sending messages and call `login` again once that happens to restart the authentication flow and get a new JWT token.
 
 #### `accessToken`
 
@@ -95,8 +111,12 @@ The simplest way to proceed is to listen to `401` or `403` server errors when se
 accessToken: string;
 ```
 
-The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued. Will be an empty string until the login flow is completed.
-There is no need to send this value along with the messages, it's handled internally by the library. It's exposed here, so you can indicate your application code whether the authentication flow was already successfully completed.
+The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued. 
+
+It will be an empty string until the login flow is completed.
+
+There is no need to send this value along with the messages. It's handled internally by the library. It's exposed here, so you can indicate to your application code whether the authentication flow was successfully completed.
+
 If the application is restarted, the library will restore the token automatically.
 
 #### `sendMessage`
@@ -120,10 +140,12 @@ function sendMessage(
 ```
 
 It returns a promise with the response. This is the simplest way to use it, but it will be slower to process the response as it waits for the full response to be available.
-If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
-If the server rejects the request, a `ChatGptError` will be thrown. A status code of `401` or `403` indicates that the token has expired, and you would have to reauthenticate.
 
-```tsx
+If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
+
+If the server rejects the request, a `ChatGptError` will be thrown. A status code of `401` or `403` indicates that the token has expired, and you must re-authenticate.
+
+```jsx
 import React from 'react';
 import { Button } from 'react-native';
 import { useChatGpt, ChatGptError } from 'react-native-chatgpt';
@@ -134,7 +156,7 @@ const Example = () => {
   const handleSendMessage = async () => {
     try {
       const { message, conversationId, messageId } = await sendMessage(
-        'Outline possible topics for a SEO article'
+        'Outline possible topics for an SEO article'
       );
 
       // After the user has read the response, send another message
@@ -177,12 +199,15 @@ function sendMessage(args: {
 }): void;
 ```
 
-It accepts a callback function to be called when a partial response is available. This is useful if you want to show the response as soon as it's available, similar to the ChatGPT web playground.
-If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
-To detect when the response is complete, check the `isDone` property in the response object.
-If an error occurs, the `onError` callback is called with a `ChatGptError`. A status code of `401` or `403` indicates that the token has expired, and you would have to reauthenticate.
+It accepts a callback function that will be called when a partial response is available. This version is helpful if you want to show the reply as soon as it's available, similar to the ChatGPT web playground.
 
-```tsx
+If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
+
+Check the `isDone` property in the response object to detect when the response is complete.
+
+If an error occurs, the `onError` callback is called with a `ChatGptError`. A status code of `401` or `403` indicates that the token has expired, and you must re-authenticate.
+
+```jsx
 import React, { useState } from 'react';
 import { Button } from 'react-native';
 import { useChatGpt, ChatGptError } from 'react-native-chatgpt';
@@ -193,7 +218,7 @@ const StreamExample = () => {
 
   const handleSendMessage = () => {
     sendMessage({
-      message: 'Outline possible topics for a SEO article',
+      message: 'Outline possible topics for an SEO article',
       onPartialResponse: ({ message, isDone }) => {
         setResponse(message);
         if (isDone) {
@@ -216,10 +241,14 @@ const StreamExample = () => {
 
 See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
+## Credits
+
+- The unofficial [node.js client](https://github.com/transitive-bullshit/chatgpt-api), which served as inspiration.
+- [OpenAI](https://openai.com) for creating [ChatGPT](https://openai.com/blog/chatgpt/) 🔥
+
 ## License
 
-MIT
+MIT © [Raul Gomez Acuna](https://raulgomez.io/)
 
----
+If you found this project interesting, please consider following me on [twitter](https://twitter.com/rgommezz)
 
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
