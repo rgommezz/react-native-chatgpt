@@ -143,13 +143,14 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
               }
               if (type === 'STREAM_ERROR') {
                 const error = new ChatGPTError(
-                  payload?.statusText || 'Unknown error'
+                  payload?.statusText ||
+                    `ChatGPTResponseStreamError: ${payload?.status}`
                 );
                 error.statusCode = payload?.status;
                 onStreamError(error);
               }
             } catch (e) {
-              console.log('error', e);
+              // Ignore errors here
             }
           }}
         />

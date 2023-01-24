@@ -147,12 +147,17 @@ export async function postMessage({
   });
 
   if (res.status >= 400 && res.status < 500) {
-    const error = new ChatGPTError('Client error');
+    const error = new ChatGPTError(
+      res.status === 403
+        ? 'ChatGPTResponseClientError: Your access token may have expired. Please login again.'
+        : `ChatGPTResponseClientError: ${res.status} ${res.statusText}`
+    );
     error.statusCode = res.status;
     throw error;
   } else if (res.status >= 500) {
-    // Server error
-    const error = new ChatGPTError('Server error');
+    const error = new ChatGPTError(
+      `ChatGPTResponseServerError: ${res.status} ${res.statusText}`
+    );
     error.statusCode = res.status;
     throw error;
   }
@@ -161,7 +166,7 @@ export async function postMessage({
   const parsedData = parseStreamBasedResponse(rawText);
 
   if (!parsedData) {
-    throw new ChatGPTError('ChatGPT raw text response, parse error');
+    throw new ChatGPTError('ChatGPTResponseError: Unable to parse response');
   }
 
   return parsedData;
