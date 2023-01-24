@@ -1,20 +1,14 @@
 import type {
   ChatGpt3Response,
-  ChatGPTError,
   SendMessageOptions,
   StreamMessageParams,
 } from './types';
 import React, {
   createContext,
-  MutableRefObject,
   PropsWithChildren,
-  RefObject,
   useContext,
   useMemo,
 } from 'react';
-import { sendMessage } from './api';
-import uuid from 'react-native-uuid';
-import type WebView from 'react-native-webview';
 
 interface ChatGpt3ContextInterface {
   accessToken: string;
@@ -33,67 +27,25 @@ const ChatGpt3Context = createContext<ChatGpt3ContextInterface>(
 interface Props {
   accessToken: string;
   login: () => void;
-  callbackRef: MutableRefObject<(arg: ChatGpt3Response) => void>;
-  errorCallbackRef: MutableRefObject<(arg: ChatGPTError) => void>;
-  webviewRef: RefObject<WebView>;
+  sendMessage: ChatGpt3ContextInterface['sendMessage'];
 }
 
 export const ChatGpt3Provider = ({
-  children,
   accessToken,
   login,
-  callbackRef,
-  errorCallbackRef,
-  webviewRef,
+  sendMessage,
+  children,
 }: PropsWithChildren<Props>) => {
   const contextValue = useMemo(
     () => ({
       accessToken,
       login,
-      sendMessage: (
-        ...args: [StreamMessageParams] | [string, SendMessageOptions?]
-      ) => {
-        if (typeof args[0] === 'string') {
-          const message = args[0];
-          const options = args[1];
-          return sendMessage({
-            accessToken,
-            message,
-            conversationId: options?.conversationId,
-            messageId: options?.messageId,
-          });
-        }
-
-        const { message, options, onPartialResponse, onError } = args[0];
-
-        if (onPartialResponse) {
-          callbackRef.current = onPartialResponse;
-          errorCallbackRef.current = onError || (() => null);
-
-          const runJavaScript = `
-            window.sendGptMessage({
-              accessToken: "${accessToken}",
-              message: "${message}",
-              messageId: "${options?.messageId || uuid.v4()}",
-              conversationId: "${options?.conversationId || uuid.v4()}"
-            });
-
-            true;
-          `;
-
-          // Stream based response
-          webviewRef.current?.injectJavaScript(runJavaScript);
-          return undefined;
-        }
-
-        return;
-      },
+      sendMessage,
     }),
-    [accessToken, callbackRef, errorCallbackRef, login, webviewRef]
+    [accessToken, login, sendMessage]
   );
 
   return (
-    // @ts-ignore
     <ChatGpt3Context.Provider value={contextValue}>
       {children}
     </ChatGpt3Context.Provider>

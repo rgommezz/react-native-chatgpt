@@ -1,5 +1,10 @@
 import uuid from 'react-native-uuid';
-import { ChatGpt3Response, ChatGPTError, SendMessageParams } from './types';
+import {
+  ChatGpt3Response,
+  ChatGPTError,
+  SendMessageOptions,
+  SendMessageParams,
+} from './types';
 import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from './constants';
 import { getHeaders, parseStreamBasedResponse } from './utils';
 
@@ -94,7 +99,24 @@ export const injectJavaScriptIntoWebViewBeforeIsLoaded = () => {
   `;
 };
 
-export async function sendMessage({
+export function getPostMessageWithStreamScript(
+  accessToken: string,
+  message: string,
+  options?: SendMessageOptions
+) {
+  return `
+      window.sendGptMessage({
+        accessToken: "${accessToken}",
+        message: "${message}",
+        messageId: "${options?.messageId || uuid.v4()}",
+        conversationId: "${options?.conversationId || uuid.v4()}"
+      });
+
+      true;
+    `;
+}
+
+export async function postMessage({
   accessToken,
   message,
   messageId = uuid.v4() as string,
