@@ -5,12 +5,12 @@
 ![platforms: ios, android, web](https://img.shields.io/badge/platform-ios%2C%20android-blue)
 [![license MIT](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/rgommezz/react-native-chatgpt/blob/master/LICENSE)
 
- <p><i>This library allows you to access ChatGPT from React Native, so you can integrate it with your own applications. **It handles authentication, streamed responses and contextual conversations**. Fully serverless.</i></p>
+ <p><i>This library allows you to access ChatGPT from React Native, so you can integrate it with your own applications. <b>It handles authentication, streamed responses and contextual conversations</b>. Fully serverless.</i></p>
 
 ## Features
 
 - **:fire: Serverless**: no need to use a custom backend to send messages to the chatbot
-- **:zap: Streaming based**: get a response as soon as it's available, similar to the ChatGPT3 web playground
+- **:zap: Streaming support**: get a response as soon as it's available, similar to the ChatGPT web playground
 - **:speaking_head: Contextual**: keep track of the conversation by sending the `conversationId` and `messageId` along with the message
 - **:atom_symbol: Cross platform**: works in iOS, Android and Web
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
@@ -67,11 +67,13 @@ const Root = () => {
 
 #### Props
 
+The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT. They are all optional. 
+
 | Name                    | Required | Type                                     | Description                                                                                                                                                                                                                          |
 | ----------------------- | -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `containerStyles`       | no       | `number`                                 | Extra style applied to the webview container                                                                                                                                                                                         |
-| `backdropStyles`        | no       | `number`                                 | Extra styles applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                               |
-| `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default it renders a black cross (X) in the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your onPress event |
+| `containerStyles`       | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the webview container                                                                                                                                                                                         |
+| `backdropStyles`        | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                               |
+| `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
 
 ### `useChatGpt`
 
@@ -85,7 +87,7 @@ function login(): void;
 
 A function to open the modal and trigger the login flow. After completion, you will get a JWT access token. This access token has an expiration date of 7 days since it was issued.
 It's important to note that this library has no control over the token expiration and there is no refresh token available.
-The simplest way to proceed is to listen to 401/403 errors when sending messages and call `login` again once that happens to get a new token.
+The simplest way to proceed is to listen to `401` or `403` server errors when sending messages and call `login` again once that happens to get a new JWT token.
 
 #### `accessToken`
 
@@ -93,9 +95,9 @@ The simplest way to proceed is to listen to 401/403 errors when sending messages
 accessToken: string;
 ```
 
-The ChatGPT access token. It has an expiration date of 7 days since it was issued. Will be an empty string until the login flow is completed.
+The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued. Will be an empty string until the login flow is completed.
 There is no need to send this value along with the messages, it's handled internally by the library. It's exposed here, so you can indicate your application code whether the authentication flow was already successfully completed.
-If the application is killed, the library will restore the token automatically.
+If the application is restarted, the library will restore the token automatically.
 
 #### `sendMessage`
 
@@ -119,12 +121,12 @@ function sendMessage(
 
 It returns a promise with the response. This is the simplest way to use it, but it will be slower to process the response as it waits for the full response to be available.
 If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
-If the server rejects the request, a `ChatGPTError` is thrown. A status code of `401` or `403` indicates that the token has expired, and you have to reauthenticate.
+If the server rejects the request, a `ChatGptError` will be thrown. A status code of `401` or `403` indicates that the token has expired, and you would have to reauthenticate.
 
 ```tsx
 import React from 'react';
 import { Button } from 'react-native';
-import { useChatGpt, ChatGPTError } from 'react-native-chatgpt';
+import { useChatGpt, ChatGptError } from 'react-native-chatgpt';
 
 const Example = () => {
   const { sendMessage } = useChatGpt();
@@ -144,8 +146,9 @@ const Example = () => {
         }
       );
     } catch (error) {
-      if (error instanceof ChatGPTError) {
-        // If you get a status code of 401 or 403, your token has expired and you have to call login again
+      if (error instanceof ChatGptError) {
+        // If you get a status code of 401 or 40
+        , your token has expired and you have to call login again
         console.log(error.message, error.statusCode);
       }
     }
@@ -170,21 +173,21 @@ function sendMessage(args: {
     conversationId: string;
     isDone?: boolean;
   }) => void;
-  onError?: (err: ChatGPTError) => void;
+  onError?: (err: ChatGptError) => void;
 }): void;
 ```
 
-It accepts a callback function to be called when a partial response is available. This is useful if you want to show the response as soon as it's available, similar to the ChatGPT3 web playground.
+It accepts a callback function to be called when a partial response is available. This is useful if you want to show the response as soon as it's available, similar to the ChatGPT web playground.
 If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
 To detect when the response is complete, check the `isDone` property in the response object.
-If an error occurs, the `onError` callback is called with a `ChatGPTError`. A status code of `401` or `40` indicates that the token has expired, and you have to reauthenticate.
+If an error occurs, the `onError` callback is called with a `ChatGptError`. A status code of `401` or `403` indicates that the token has expired, and you would have to reauthenticate.
 
 ```tsx
 import React, { useState } from 'react';
 import { Button } from 'react-native';
-import { useChatGpt, ChatGPTError } from 'react-native-chatgpt';
+import { useChatGpt, ChatGptError } from 'react-native-chatgpt';
 
-const Example = () => {
+const StreamExample = () => {
   const { sendMessage } = useChatGpt();
   const [response, setResponse] = useState('');
 
@@ -201,7 +204,7 @@ const Example = () => {
   };
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <Button onPress={handleSendMessage} title="Get streamed response" />
       <Text>{response}</Text>
     </View>
