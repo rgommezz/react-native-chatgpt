@@ -2,7 +2,10 @@ import * as React from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useAppState } from '@react-native-community/hooks';
 import { Animated, StyleSheet, View } from 'react-native';
-import { injectJavaScriptIntoWebViewBeforeIsLoaded } from './api';
+import {
+  checkIfChatGPTIsAtFullCapacityScript,
+  injectJavaScriptIntoWebViewBeforeIsLoaded,
+} from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
 import { ChatGpt3Response, ChatGPTError, WebViewEvents } from './types';
@@ -68,15 +71,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     }, [currentAppState, webviewRef]);
 
     function checkIfChatGPTIsAtFullCapacity() {
-      const script = `
-        const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
-        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        if (element) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'GPT3_FULL_CAPACITY' }));
-        }
-
-        true;
-      `;
+      const script = checkIfChatGPTIsAtFullCapacityScript();
       webviewRef.current?.injectJavaScript(script);
     }
 

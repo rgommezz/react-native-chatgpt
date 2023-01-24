@@ -8,6 +8,15 @@ import {
 import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from './constants';
 import { getHeaders, parseStreamBasedResponse } from './utils';
 
+/**
+ * Monkey patches fetch to intercept ChatGPT3 requests and read the JWT
+ * It also injects a method in the global scope to send messages to the ChatGPT3 backend
+ * directly from the Webview and stream the response back to RN
+ *
+ * Note: It'd be cool to define the function in normal JS and
+ * use fn.toString() or`${fn}` and wrap it in a IIFE,
+ * but babel messes up the transformations of async/await and breaks the injected code.
+ */
 export const injectJavaScriptIntoWebViewBeforeIsLoaded = () => {
   return `
     const { fetch: originalFetch } = window;
@@ -105,15 +114,15 @@ export function getPostMessageWithStreamScript(
   options?: SendMessageOptions
 ) {
   return `
-      window.sendGptMessage({
-        accessToken: "${accessToken}",
-        message: "${message}",
-        messageId: "${options?.messageId || uuid.v4()}",
-        conversationId: "${options?.conversationId || uuid.v4()}"
-      });
+    window.sendGptMessage({
+      accessToken: "${accessToken}",
+      message: "${message}",
+      messageId: "${options?.messageId || uuid.v4()}",
+      conversationId: "${options?.conversationId || uuid.v4()}"
+    });
 
-      true;
-    `;
+    true;
+  `;
 }
 
 export async function postMessage({
@@ -170,4 +179,16 @@ export async function postMessage({
   }
 
   return parsedData;
+}
+
+export function checkIfChatGPTIsAtFullCapacityScript() {
+  return `
+    const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
+    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    if (element) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'GPT3_FULL_CAPACITY' }));
+    }
+
+    true;
+  `;
 }
