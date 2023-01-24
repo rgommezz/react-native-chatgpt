@@ -2,11 +2,13 @@ import React, {
   createContext,
   ReactNode,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WebView } from 'react-native-webview';
 import {
   CHAT_PAGE,
@@ -17,6 +19,7 @@ import {
   parseStreamBasedResponse,
   PROMPT_ENDPOINT,
   sendMessage,
+  usePrevious,
   USER_AGENT,
 } from './utils';
 import uuid from 'react-native-uuid';
@@ -71,14 +74,52 @@ export default function ChatGpt3({
 }: {
   children?: ReactNode | undefined;
 }) {
+  const animatedValue = useRef(new Animated.Value(0));
   const webviewRef = useRef<WebView>(null);
   const [accessToken, setAccessToken] = useState('');
-  const [webViewVisible, setWebViewVisible] = useState(false);
+  const [status, setStatus] = useState<'hidden' | 'animating' | 'visible'>(
+    'hidden'
+  );
+  const prevStatus = usePrevious(status);
   const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGPTError) => void>(() => null);
 
+  const translateY = animatedValue.current.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Dimensions.get('window').height, 0],
+    extrapolate: 'clamp',
+  });
+  const opacity = animatedValue.current.interpolate({
+    inputRange: [0, 0.8, 1],
+    outputRange: [0, 0, 1],
+    extrapolate: 'clamp',
+  });
+  const scale = animatedValue.current.interpolate({
+    inputRange: [0, 0.01, 0.02, 1],
+    outputRange: [0, 0, 1, 1],
+  });
+
+  const animateWebView = (mode: 'hide' | 'show') => {
+    setStatus('animating');
+    Animated.timing(animatedValue.current, {
+      toValue: mode === 'show' ? 1 : 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      setStatus(mode === 'show' ? 'visible' : 'hidden');
+    });
+  };
+
+  useEffect(() => {
+    if (prevStatus === 'hidden' && status === 'animating') {
+      animateWebView('show');
+    } else if (prevStatus === 'visible' && status === 'animating') {
+      animateWebView('hide');
+    }
+  }, [prevStatus, status]);
+
   const login = () => {
-    setWebViewVisible(true);
+    setStatus('animating');
     setAccessToken('');
   };
 
@@ -127,22 +168,6 @@ export default function ChatGpt3({
     }),
     [accessToken]
   );
-
-  // useDerivedValue(() => {
-  //   animatedValue.value = withTiming(webViewVisibility === 'visible' ? 1 : 0, {
-  //     duration: 1000,
-  //   });
-  // }, [webViewVisibility]);
-  //
-  // const webViewAnimatedStyle = useAnimatedStyle(() => {
-  //   const translateY = interpolate(animatedValue.value, [0, 1], [150, 0]);
-  //   const opacity = interpolate(animatedValue.value, [0, 0.2, 1], [0, 0, 1]);
-  //   const scale = interpolate(animatedValue.value, [0, 0.2, 1], [0, 1, 1]);
-  //   return {
-  //     opacity,
-  //     transform: [{ translateY }, { scale }],
-  //   };
-  // });
 
   // Intercept fetch requests to extract the access token
   const runFirst = `
@@ -238,13 +263,17 @@ export default function ChatGpt3({
     <View style={{ flex: 1 }}>
       {/* @ts-ignore */}
       <ChatGpt3Context.Provider value={contextValue}>
-        <View
+        <Animated.View
           style={[
             styles.container,
             {
+              opacity,
               transform: [
                 {
-                  scale: webViewVisible ? 1 : 0,
+                  translateY,
+                },
+                {
+                  scale,
                 },
               ],
             },
@@ -254,12 +283,14 @@ export default function ChatGpt3({
             injectedJavaScriptBeforeContentLoaded={runFirst}
             ref={webviewRef}
             style={{ flex: 1, backgroundColor: 'white' }}
-            source={{ uri: webViewVisible ? LOGIN_PAGE : CHAT_PAGE }}
+            source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
             onNavigationStateChange={(event) => {
               if (event.url === CHAT_PAGE && event.loading) {
                 // We have successfully logged in, or we were already logged in.
                 // We can hide the webview now.
-                setWebViewVisible(false);
+                if (status === 'visible') {
+                  setStatus('animating');
+                }
               }
             }}
             userAgent={USER_AGENT}
@@ -301,7 +332,15 @@ export default function ChatGpt3({
               }
             }}
           />
-        </View>
+          <View style={styles.closeButton}>
+            <Icon
+              name="close"
+              color="black"
+              size={24}
+              onPress={() => setStatus('animating')}
+            />
+          </View>
+        </Animated.View>
         {children}
       </ChatGpt3Context.Provider>
     </View>
@@ -311,14 +350,28 @@ export default function ChatGpt3({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    // // Needed for Android to be on top of everything else
-    elevation: 10000,
+    // Needed for Android to be on top of everything else
+    elevation: 8,
     zIndex: 100,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 96,
+    left: 32,
+    right: 32,
+    bottom: 96,
+    borderRadius: 16,
+    overflow: 'hidden',
     flex: 1,
     backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
   },
 });

@@ -1,5 +1,6 @@
 import uuid from 'react-native-uuid';
 import { Platform } from 'react-native';
+import { useEffect, useRef } from 'react';
 
 export interface ChatGpt3Response {
   message: string;
@@ -143,4 +144,12 @@ export async function sendMessage({
   }
 
   return parsedData;
+}
+
+export function usePrevious<T>(value: T): T {
+  const ref: any = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
 }

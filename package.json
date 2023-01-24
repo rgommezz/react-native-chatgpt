@@ -58,6 +58,7 @@
     "@types/jest": "^28.1.2",
     "@types/react": "~17.0.21",
     "@types/react-native": "0.70.0",
+    "@types/react-native-vector-icons": "^6.4.13",
     "commitlint": "^17.0.2",
     "del-cli": "^5.0.0",
     "eslint": "^8.4.1",
@@ -69,6 +70,8 @@
     "react": "18.1.0",
     "react-native": "0.70.5",
     "react-native-builder-bob": "^0.20.3",
+    "react-native-vector-icons": "^9.2.0",
+    "react-native-webview": "^11.26.0",
     "release-it": "^15.0.0",
     "typescript": "^4.5.2"
   },
@@ -76,8 +79,11 @@
     "@types/react": "17.0.21"
   },
   "peerDependencies": {
+    "@expo/vector-icons": "*",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-vector-icons": "*",
+    "react-native-webview": "*"
   },
   "engines": {
     "node": ">= 16.0.0"
@@ -158,7 +164,6 @@
   },
   "dependencies": {
     "date-fns": "^2.29.3",
-    "react-native-uuid": "^2.0.1",
-    "react-native-webview": "^11.26.0"
+    "react-native-uuid": "^2.0.1"
   }
 }
