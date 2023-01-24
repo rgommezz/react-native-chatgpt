@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useRef, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { WebView as RNWebView } from 'react-native-webview';
 import type {
@@ -8,14 +8,15 @@ import type {
   StreamMessageParams,
 } from './types';
 import { ChatGpt3Provider } from './Context';
-import ModalWebView, { ModalWebViewMethods } from './ModalWebView';
+import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
 import { getPostMessageWithStreamScript, postMessage } from './api';
 
 export default function ChatGpt3({
+  containerStyles,
+  backdropStyles,
+  renderCustomCloseIcon,
   children,
-}: {
-  children?: ReactNode | undefined;
-}) {
+}: PropsWithChildren<PublicProps>) {
   const webviewRef = useRef<RNWebView>(null);
   const modalRef = useRef<ModalWebViewMethods>(null);
   const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
@@ -85,6 +86,9 @@ export default function ChatGpt3({
           onAccessTokenChange={setAccessToken}
           onPartialResponse={(result) => callbackRef.current?.(result)}
           onStreamError={(error) => errorCallbackRef.current?.(error)}
+          containerStyles={containerStyles}
+          backdropStyles={backdropStyles}
+          renderCustomCloseIcon={renderCustomCloseIcon}
         />
         {children}
       </ChatGpt3Provider>

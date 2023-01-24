@@ -1,7 +1,13 @@
 import * as React from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import {
+  forwardRef,
+  ReactNode,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import { useAppState } from '@react-native-community/hooks';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkIfChatGPTIsAtFullCapacityScript,
   injectJavaScriptIntoWebViewBeforeIsLoaded,
@@ -13,13 +19,21 @@ import { parseStreamBasedResponse, wait } from './utils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useWebViewAnimation } from './hooks';
 
-interface Props {
+interface PassedProps {
   accessToken: string;
   webviewRef: React.RefObject<RNWebView>;
   onAccessTokenChange: (newAccessToken: string) => void;
   onPartialResponse: (response: ChatGpt3Response) => void;
   onStreamError: (error: ChatGPTError) => void;
 }
+
+export interface PublicProps {
+  containerStyles?: StyleProp<ViewStyle>;
+  backdropStyles?: StyleProp<ViewStyle>;
+  renderCustomCloseIcon?: (closeModal: () => void) => ReactNode;
+}
+
+type Props = PassedProps & PublicProps;
 
 export interface ModalWebViewMethods {
   open: () => void;
@@ -33,6 +47,9 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       onPartialResponse,
       onStreamError,
       webviewRef,
+      containerStyles,
+      backdropStyles,
+      renderCustomCloseIcon,
     },
     ref
   ) => {
@@ -82,9 +99,15 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       checkIfChatGPTIsAtFullCapacity();
     }
 
+    function closeModal() {
+      animateWebView('hide');
+    }
+
     return (
       <>
-        <Animated.View style={[styles.container, animatedStyles.webview]}>
+        <Animated.View
+          style={[styles.container, animatedStyles.webview, containerStyles]}
+        >
           <RNWebView
             injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
             ref={webviewRef}
@@ -141,17 +164,14 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
               }
             }}
           />
-          <View style={styles.closeButton}>
-            <Icon
-              name="close"
-              color="black"
-              size={32}
-              onPress={() => animateWebView('hide')}
-            />
-          </View>
+          {renderCustomCloseIcon?.(closeModal) || (
+            <View style={styles.closeButton}>
+              <Icon name="close" color="black" size={32} onPress={closeModal} />
+            </View>
+          )}
         </Animated.View>
         <Animated.View
-          style={[styles.backdrop, animatedStyles.backdrop]}
+          style={[styles.backdrop, animatedStyles.backdrop, backdropStyles]}
           pointerEvents="none"
         />
       </>
