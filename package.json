@@ -1,7 +1,7 @@
 {
   "name": "react-native-chatgpt",
   "version": "0.3.1",
-  "description": "test",
+  "description": "A ChatGPT React Native wrapper to integrate it with your applications. It handles authentication, streamed responses, and contextual conversations. Fully serverless",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/index.d.ts",
@@ -41,7 +41,7 @@
     "android"
   ],
   "repository": "https://github.com/rgommezz/react-native-chatgpt",
-  "author": "rgommezz <rauliyohmc@gmail.com> (https://github.com/rgommezz)",
+  "author": "rgommezz <hello@raulgomez.io> (https://github.com/rgommezz)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/rgommezz/react-native-chatgpt/issues"
