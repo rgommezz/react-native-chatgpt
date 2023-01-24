@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WebView } from 'react-native-webview';
 import {
@@ -120,7 +120,6 @@ export default function ChatGpt3({
 
   const login = () => {
     setStatus('animating');
-    setAccessToken('');
   };
 
   const contextValue = useMemo(
@@ -282,10 +281,10 @@ export default function ChatGpt3({
           <WebView
             injectedJavaScriptBeforeContentLoaded={runFirst}
             ref={webviewRef}
-            style={{ flex: 1, backgroundColor: 'white' }}
+            style={styles.webview}
             source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
             onNavigationStateChange={(event) => {
-              if (event.url === CHAT_PAGE && event.loading) {
+              if (event.url.startsWith(CHAT_PAGE) && event.loading) {
                 // We have successfully logged in, or we were already logged in.
                 // We can hide the webview now.
                 if (status === 'visible') {
@@ -301,16 +300,14 @@ export default function ChatGpt3({
                   event.nativeEvent.data
                 ) as WebViewEvents;
                 if (type === 'REQUEST_INTERCEPTED_CONFIG') {
-                  if (accessToken) {
-                    // We already have the access token, no need to do anything
-                    return;
-                  }
                   if (Object.keys(payload)) {
                     // We have headers
                     const { headers } = payload;
                     if (headers && 'Authorization' in headers) {
                       const authToken = headers?.Authorization;
-                      setAccessToken(authToken as string);
+                      if (!!authToken && authToken !== accessToken) {
+                        setAccessToken(authToken);
+                      }
                     }
                   }
                 }
@@ -354,20 +351,24 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 100,
     top: 96,
-    left: 32,
-    right: 32,
+    left: 16,
+    right: 16,
     bottom: 96,
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
     flex: 1,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: {
-      width: 0,
-      height: 2,
+      width: 4,
+      height: 4,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 10,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 16,
   },
   closeButton: {
     position: 'absolute',
