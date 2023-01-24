@@ -7,21 +7,19 @@ import React, {
 } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { WebView } from 'react-native-webview';
-import type { ChatGpt3Response, WebViewEvents } from './types';
-import { ChatGPTError } from './types';
-import { injectJavaScriptIntoWebViewBeforeIsLoaded } from './api';
-import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
-import { parseStreamBasedResponse } from './utils';
+import type { WebView as RNWebView } from 'react-native-webview';
+import type { ChatGpt3Response } from './types';
+import type { ChatGPTError } from './types';
 import { ChatGpt3Provider } from './Context';
 import { usePrevious, useWebViewAnimation } from './hooks';
+import WebView from './WebView';
 
 export default function ChatGpt3({
   children,
 }: {
   children?: ReactNode | undefined;
 }) {
-  const webviewRef = useRef<WebView>(null);
+  const webviewRef = useRef<RNWebView>(null);
   const callbackRef = useRef<(arg: ChatGpt3Response) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGPTError) => void>(() => null);
 
@@ -60,55 +58,13 @@ export default function ChatGpt3({
       >
         <Animated.View style={[styles.container, animatedStyles]}>
           <WebView
-            injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
             ref={webviewRef}
-            style={styles.webview}
-            source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
-            onNavigationStateChange={(event) => {
-              if (event.url.startsWith(CHAT_PAGE) && event.loading) {
-                // We have successfully logged in, or we were already logged in.
-                // We can hide the webview now.
-                if (status === 'visible') {
-                  setStatus('animating');
-                }
-              }
-            }}
-            userAgent={USER_AGENT}
-            sharedCookiesEnabled
-            onMessage={(event) => {
-              try {
-                const { payload, type } = JSON.parse(
-                  event.nativeEvent.data
-                ) as WebViewEvents;
-                if (type === 'REQUEST_INTERCEPTED_CONFIG') {
-                  if (Object.keys(payload)) {
-                    // We have headers
-                    const { headers } = payload;
-                    if (headers && 'Authorization' in headers) {
-                      const authToken = headers?.Authorization;
-                      if (!!authToken && authToken !== accessToken) {
-                        setAccessToken(authToken);
-                      }
-                    }
-                  }
-                }
-                if (type === 'RAW_PARTIAL_RESPONSE') {
-                  const result = parseStreamBasedResponse(payload);
-                  if (result) {
-                    callbackRef.current?.(result);
-                  }
-                }
-                if (type === 'STREAM_ERROR') {
-                  const error = new ChatGPTError(
-                    payload?.statusText || 'Unknown error'
-                  );
-                  error.statusCode = payload?.status;
-                  errorCallbackRef.current?.(error);
-                }
-              } catch (e) {
-                console.log('error', e);
-              }
-            }}
+            accessToken={accessToken}
+            status={status}
+            onLoginSuccess={() => setStatus('animating')}
+            onAccessTokenChange={setAccessToken}
+            onPartialResponse={(result) => callbackRef.current?.(result)}
+            onStreamError={(error) => errorCallbackRef.current?.(error)}
           />
           <View style={styles.closeButton}>
             <Icon
@@ -148,11 +104,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 10,
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
   },
   closeButton: {
     position: 'absolute',
