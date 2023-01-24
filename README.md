@@ -43,15 +43,25 @@ This is not an official ChatGPT library. It's an effort to make it easier to int
 npm install react-native-chatgpt
 ```
 
-You also need to install `react-native-webview` and `react-native-vector-icons`;
+### Expo
+
+You also need to install `react-native-webview`
+
+```sh
+npx expo install react-native-webview
+```
+
+No additional steps are needed.
+
+### Bare React Native apps
+
+You also need to install `react-native-webview` and `react-native-vector-icons`
 
 ```sh
 npm install react-native-webview react-native-vector-icons
 ```
 
-### Additional instructions for bare React Native apps
-
-If you are developing a bare React Native app, you should also follow some additional installation instructions to set up `react-native-webview` and `react-native-vector-icons` properly. If using [Expo](https://docs.expo.dev/), you can skip this step.
+After the installation completes, you should also follow some additional instructions to set up `react-native-webview` and `react-native-vector-icons` properly.
 
 - [react-native-webview](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Getting-Started.md)
 - [react-native-vector-icons](https://github.com/oblador/react-native-vector-icons#installation)
@@ -123,7 +133,7 @@ If the application is restarted, the library will restore the token automaticall
 
 This is the core function of the library. It sends a message to the chatbot and returns the response. It can be used in two different ways depending on the arguments passed:
 
-##### Standard
+#### Standard
 
 ```ts
 function sendMessage(
@@ -180,7 +190,7 @@ const Example = () => {
 };
 ```
 
-##### Streaming
+#### Streaming
 
 ```ts
 function sendMessage(args: {
