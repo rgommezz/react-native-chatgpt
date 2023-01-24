@@ -84,14 +84,15 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
         if (element) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'GPT3_FULL_CAPACITY' }));
         }
+
+        true;
       `;
       webviewRef.current?.injectJavaScript(script);
     }
 
     async function reloadAndCheckCapacityAgain() {
-      await wait(2000);
       webviewRef.current?.reload();
-      await wait(500);
+      await wait(5000);
       checkIfChatGPTIsAtFullCapacity();
     }
 
