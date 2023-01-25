@@ -60,10 +60,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 24,
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+    paddingTop: 64,
   },
 });

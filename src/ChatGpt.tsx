@@ -1,9 +1,8 @@
 import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 import type { WebView as RNWebView } from 'react-native-webview';
 import type {
-  ChatGptResponse,
   ChatGptError,
+  ChatGptResponse,
   SendMessageOptions,
   StreamMessageParams,
 } from './types';
@@ -73,31 +72,23 @@ export default function ChatGpt({
   const memoizedSendMessage = useCallback(sendMessage, [accessToken]);
 
   return (
-    <View style={styles.flex}>
-      <ChatGptProvider
+    <ChatGptProvider
+      accessToken={accessToken}
+      login={login}
+      sendMessage={memoizedSendMessage}
+    >
+      {children}
+      <ModalWebView
+        ref={modalRef}
+        webviewRef={webviewRef}
         accessToken={accessToken}
-        login={login}
-        sendMessage={memoizedSendMessage}
-      >
-        <ModalWebView
-          ref={modalRef}
-          webviewRef={webviewRef}
-          accessToken={accessToken}
-          onAccessTokenChange={setAccessToken}
-          onPartialResponse={(result) => callbackRef.current?.(result)}
-          onStreamError={(error) => errorCallbackRef.current?.(error)}
-          containerStyles={containerStyles}
-          backdropStyles={backdropStyles}
-          renderCustomCloseIcon={renderCustomCloseIcon}
-        />
-        {children}
-      </ChatGptProvider>
-    </View>
+        onAccessTokenChange={setAccessToken}
+        onPartialResponse={(result) => callbackRef.current?.(result)}
+        onStreamError={(error) => errorCallbackRef.current?.(error)}
+        containerStyles={containerStyles}
+        backdropStyles={backdropStyles}
+        renderCustomCloseIcon={renderCustomCloseIcon}
+      />
+    </ChatGptProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-});

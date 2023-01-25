@@ -1,6 +1,6 @@
 {
   "name": "react-native-chatgpt",
-  "version": "0.4.1",
+  "version": "0.4.0",
   "description": "A ChatGPT React Native wrapper to integrate it with your applications. It handles authentication, streamed responses, and contextual conversations. Fully serverless",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -79,6 +79,7 @@
     "@types/react": "17.0.21"
   },
   "peerDependencies": {
+    "@expo/vector-icons": "*",
     "react": "*",
     "react-native": "*",
     "react-native-vector-icons": "*",
