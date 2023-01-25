@@ -125,6 +125,9 @@ export const createGlobalFunctionsInWebviewContext = () => {
   `;
 };
 
+/**
+ * Calls a global function in the Webview window object to send a streamed message
+ */
 export function postStreamedMessage({
   accessToken,
   message,
@@ -144,6 +147,9 @@ export function postStreamedMessage({
   webview?.injectJavaScript(script);
 }
 
+/**
+ * Sends a normal message to the ChatGPT conversation backend endpoint
+ */
 export async function postMessage({
   accessToken,
   message,
@@ -204,6 +210,10 @@ export function reloadWebView() {
   webview?.reload();
 }
 
+/**
+ * Removes the icon button in the top right corner of the webview screen when
+ * ChatGPT is at full capacity
+ */
 export async function removeThemeSwitcher() {
   // Apparently the button is not there yet after the page loads, so we wait a bit
   await wait(100);
@@ -221,6 +231,9 @@ export async function removeThemeSwitcher() {
   webview?.injectJavaScript(script);
 }
 
+/**
+ * Checks if ChatGPT servers are overloaded and the normal login page is not accessible
+ */
 export function checkFullCapacity() {
   const script = `
     (() => {
@@ -236,6 +249,9 @@ export function checkFullCapacity() {
   webview?.injectJavaScript(script);
 }
 
+/**
+ * Refreshes the webview and checks again if the login page is available
+ */
 export async function retryLogin() {
   reloadWebView();
   // Waiting 3 seconds before checking again
