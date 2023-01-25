@@ -136,7 +136,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 !loading
               ) {
                 // Apparently the button is not there yet after this fires, so we wait a bit
-                await wait(32);
+                await wait(100);
                 const script = removeThemeSwitcherScript();
                 webviewRef.current?.injectJavaScript(script);
               }
