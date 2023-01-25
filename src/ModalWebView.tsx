@@ -14,7 +14,7 @@ import {
 } from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
-import { ChatGptResponse, ChatGptError, WebViewEvents } from './types';
+import { ChatGptError, ChatGptResponse, WebViewEvents } from './types';
 import { parseStreamBasedResponse, wait } from './utils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useWebViewAnimation } from './hooks';
@@ -82,10 +82,10 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     useEffect(() => {
       // Every time the app is brought to the foreground,
       // we reload the webview to avoid 403s from Cloudfare on the chat screen
-      if (currentAppState === 'active') {
+      if (currentAppState === 'active' && status === 'hidden') {
         webviewRef.current?.reload();
       }
-    }, [currentAppState, webviewRef]);
+    }, [currentAppState, status, webviewRef]);
 
     useBackHandler(() => {
       if (status !== 'hidden') {
