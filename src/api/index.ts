@@ -1,25 +1,29 @@
 import uuid from 'react-native-uuid';
-import {
-  ChatGptResponse,
-  ChatGptError,
-  SendMessageOptions,
-  SendMessageParams,
-} from '../types';
+import { ChatGptError, ChatGptResponse, SendMessageParams } from '../types';
 import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from '../constants';
 import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 import getChatGptConversationHeaders from '../utils/getChatGptConversationHeaders';
+import type { RefObject } from 'react';
+import type WebView from 'react-native-webview';
+import wait from '../utils/wait';
+
+let webview: RefObject<WebView>['current'];
+
+export const init = (webviewRef: RefObject<WebView>['current']) => {
+  webview = webviewRef;
+};
 
 /**
  * Monkey patches fetch to intercept ChatGPT requests and read the JWT
- * It also injects 2 methods in the global scope:
- * 1. Send messages to the ChatGPT backend directly from the Webview and stream the response back to RN
- * 2. Remove the theme switcher button from the webview when GPT shows it's at full capacity
+ * It also injects 2 methods in the global scope to accomplish the following:
+ * 1. Sending messages to the ChatGPT backend directly from the Webview and stream the response back to RN
+ * 2. Removing the theme switcher button from the webview when GPT shows it's at full capacity
  *
  * Note: It'd be cool to define the function in normal JS and
  * use fn.toString() or`${fn}` and wrap it in a IIFE,
  * but babel messes up the transformations of async/await and breaks the injected code.
  */
-export const injectJavaScriptIntoWebViewBeforeIsLoaded = () => {
+export const createGlobalFunctionsInWebviewContext = () => {
   return `
     const { fetch: originalFetch } = window;
     window.fetch = async (...args) => {
@@ -121,21 +125,23 @@ export const injectJavaScriptIntoWebViewBeforeIsLoaded = () => {
   `;
 };
 
-export function getPostMessageWithStreamScript(
-  accessToken: string,
-  message: string,
-  options?: SendMessageOptions
-) {
-  return `
+export function postStreamedMessage({
+  accessToken,
+  message,
+  messageId = uuid.v4() as string,
+  conversationId = uuid.v4() as string,
+}: SendMessageParams) {
+  const script = `
     window.sendGptMessage({
       accessToken: "${accessToken}",
       message: "${message}",
-      messageId: "${options?.messageId || uuid.v4()}",
-      conversationId: "${options?.conversationId || uuid.v4()}"
+      messageId: "${messageId}",
+      conversationId: "${conversationId}"
     });
 
     true;
   `;
+  webview?.injectJavaScript(script);
 }
 
 export async function postMessage({
@@ -194,8 +200,14 @@ export async function postMessage({
   return parsedData;
 }
 
-export function removeThemeSwitcherScript() {
-  return `
+export function reloadWebView() {
+  webview?.reload();
+}
+
+export async function removeThemeSwitcher() {
+  // Apparently the button is not there yet after the page loads, so we wait a bit
+  await wait(100);
+  const script = `
     (() => {
       const _xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
       const _element = document.evaluate(_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -205,10 +217,12 @@ export function removeThemeSwitcherScript() {
       true;
     })();
   `;
+
+  webview?.injectJavaScript(script);
 }
 
-export function checkIfChatGptIsAtFullCapacityScript() {
-  return `
+export function checkFullCapacity() {
+  const script = `
     (() => {
       const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
       const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -216,8 +230,15 @@ export function checkIfChatGptIsAtFullCapacityScript() {
         window.removeThemeSwitcher();
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHAT_GPT_FULL_CAPACITY' }));
       }
-
       true;
     })();
   `;
+  webview?.injectJavaScript(script);
+}
+
+export async function retryLogin() {
+  reloadWebView();
+  // Waiting 3 seconds before checking again
+  await wait(3000);
+  checkFullCapacity();
 }

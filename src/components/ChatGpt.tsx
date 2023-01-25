@@ -1,14 +1,13 @@
 import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
-import type { WebView as RNWebView } from 'react-native-webview';
 import type {
-  ChatGptError,
   ChatGptResponse,
   SendMessageOptions,
   StreamMessageParams,
 } from '../types';
+import { ChatGptError } from '../types';
 import { ChatGptProvider } from '../contexts/ChatGptContext';
 import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
-import { getPostMessageWithStreamScript, postMessage } from '../api';
+import { postMessage, postStreamedMessage } from '../api';
 
 export default function ChatGpt({
   containerStyles,
@@ -16,7 +15,6 @@ export default function ChatGpt({
   renderCustomCloseIcon,
   children,
 }: PropsWithChildren<PublicProps>) {
-  const webviewRef = useRef<RNWebView>(null);
   const modalRef = useRef<ModalWebViewMethods>(null);
   const callbackRef = useRef<(arg: ChatGptResponse) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGptError) => void>(() => null);
@@ -48,23 +46,22 @@ export default function ChatGpt({
 
     const { message, options, onPartialResponse, onError } = args[0];
 
-    // Stream based response.
-    if (onPartialResponse) {
-      // Assigning success and error callbacks to the ref so that they can be called from the webview.
-      callbackRef.current = onPartialResponse;
-      errorCallbackRef.current = onError || (() => null);
-
-      const postMessageWithStreamScript = getPostMessageWithStreamScript(
-        accessToken,
-        message,
-        options
+    if (!onPartialResponse) {
+      throw new ChatGptError(
+        'onPartialResponse is required for stream based responses.'
       );
-
-      webviewRef.current?.injectJavaScript(postMessageWithStreamScript);
-      return undefined;
     }
 
-    return;
+    // Assigning success and error callbacks to the refs so that they can be called from the webview.
+    callbackRef.current = onPartialResponse;
+    errorCallbackRef.current = onError || (() => null);
+
+    return postStreamedMessage({
+      accessToken,
+      message,
+      conversationId: options?.conversationId,
+      messageId: options?.messageId,
+    });
   }
 
   // Memoize sendMessage to avoid unnecessary re-renders
@@ -80,7 +77,6 @@ export default function ChatGpt({
       {children}
       <ModalWebView
         ref={modalRef}
-        webviewRef={webviewRef}
         accessToken={accessToken}
         onAccessTokenChange={setAccessToken}
         onPartialResponse={(result) => callbackRef.current?.(result)}

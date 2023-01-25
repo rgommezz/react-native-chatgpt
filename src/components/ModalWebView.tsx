@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   forwardRef,
   ReactNode,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useState,
@@ -10,20 +11,21 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppState, useBackHandler } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
-  checkIfChatGptIsAtFullCapacityScript,
-  injectJavaScriptIntoWebViewBeforeIsLoaded,
-  removeThemeSwitcherScript,
+  checkFullCapacity,
+  createGlobalFunctionsInWebviewContext,
+  init,
+  retryLogin,
+  reloadWebView,
+  removeThemeSwitcher,
 } from '../api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from '../constants';
 import { ChatGptError, ChatGptResponse, WebViewEvents } from '../types';
 import useWebViewAnimation from '../hooks/useWebViewAnimation';
-import wait from '../utils/wait';
 import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 
 interface PassedProps {
   accessToken: string;
-  webviewRef: React.RefObject<RNWebView>;
   onAccessTokenChange: (newAccessToken: string) => void;
   onPartialResponse: (response: ChatGptResponse) => void;
   onStreamError: (error: ChatGptError) => void;
@@ -48,7 +50,6 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       onAccessTokenChange,
       onPartialResponse,
       onStreamError,
-      webviewRef,
       containerStyles,
       backdropStyles,
       renderCustomCloseIcon,
@@ -66,6 +67,12 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
         setStatus(mode === 'show' ? 'visible' : 'hidden'),
     });
 
+    const onWebviewRefChange = useCallback((webviewRef: RNWebView) => {
+      if (webviewRef) {
+        init(webviewRef);
+      }
+    }, []);
+
     useImperativeHandle(ref, () => ({
       open: () => {
         animateWebView('show');
@@ -76,18 +83,17 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       if (status === 'visible') {
         // Check if the page shown is ChatGPT is at full capacity.
         // If it is, we can reload the page at intervals to check if it's available again.
-        checkIfChatGptIsAtFullCapacity();
+        checkFullCapacity();
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]);
 
     useEffect(() => {
       // Every time the app is brought to the foreground,
       // we reload the webview to avoid 403s from Cloudfare on the chat screen
       if (currentAppState === 'active' && status === 'hidden') {
-        webviewRef.current?.reload();
+        reloadWebView();
       }
-    }, [currentAppState, status, webviewRef]);
+    }, [currentAppState, status]);
 
     useBackHandler(() => {
       if (status !== 'hidden') {
@@ -98,18 +104,6 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
       // Let the default thing happen
       return false;
     });
-
-    function checkIfChatGptIsAtFullCapacity() {
-      const script = checkIfChatGptIsAtFullCapacityScript();
-      webviewRef.current?.injectJavaScript(script);
-    }
-
-    async function reloadAndCheckCapacityAgain() {
-      await wait(2000);
-      webviewRef.current?.reload();
-      await wait(3000);
-      checkIfChatGptIsAtFullCapacity();
-    }
 
     function closeModal() {
       animateWebView('hide');
@@ -126,8 +120,8 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
           ]}
         >
           <RNWebView
-            injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
-            ref={webviewRef}
+            injectedJavaScriptBeforeContentLoaded={createGlobalFunctionsInWebviewContext()}
+            ref={onWebviewRefChange}
             onLoad={async (event) => {
               const { url, loading, navigationType } = event.nativeEvent;
               if (
@@ -136,10 +130,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 !!navigationType &&
                 !loading
               ) {
-                // Apparently the button is not there yet after this fires, so we wait a bit
-                await wait(100);
-                const script = removeThemeSwitcherScript();
-                webviewRef.current?.injectJavaScript(script);
+                removeThemeSwitcher();
               }
             }}
             style={styles.webview}
@@ -156,7 +147,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
             userAgent={USER_AGENT}
             sharedCookiesEnabled
             onContentProcessDidTerminate={() => {
-              webviewRef.current?.reload();
+              reloadWebView();
             }}
             onMessage={(event) => {
               try {
@@ -183,7 +174,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 }
                 if (type === 'CHAT_GPT_FULL_CAPACITY' && status === 'visible') {
                   // Reload the page to check if it's available again.
-                  reloadAndCheckCapacityAgain();
+                  retryLogin();
                 }
                 if (type === 'STREAM_ERROR') {
                   const error = new ChatGptError(
