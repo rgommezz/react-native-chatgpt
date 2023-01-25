@@ -116,7 +116,12 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     return (
       <>
         <Animated.View
-          style={[styles.container, animatedStyles.webview, containerStyles]}
+          style={[
+            styles.container,
+            animatedStyles.webview,
+            { display: status === 'hidden' ? 'none' : 'flex' },
+            containerStyles,
+          ]}
         >
           <RNWebView
             injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
@@ -181,7 +186,12 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
           )}
         </Animated.View>
         <Animated.View
-          style={[styles.backdrop, animatedStyles.backdrop, backdropStyles]}
+          style={[
+            styles.backdrop,
+            animatedStyles.backdrop,
+            { display: status === 'hidden' ? 'none' : 'flex' },
+            backdropStyles,
+          ]}
           pointerEvents="none"
         />
       </>

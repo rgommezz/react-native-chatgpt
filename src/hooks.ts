@@ -20,10 +20,6 @@ export function useWebViewAnimation({
     ],
     extrapolate: 'clamp',
   });
-  const scale = animatedValue.current.interpolate({
-    inputRange: [0, 0.01, 0.02, 1],
-    outputRange: [0.01, 0.01, 1, 1],
-  });
   const backdropOpacity = animatedValue.current.interpolate({
     inputRange: [0, 0.8, 1],
     outputRange: [0, 0.5, 0.5],
@@ -43,7 +39,7 @@ export function useWebViewAnimation({
   return {
     animatedStyles: {
       webview: {
-        transform: [{ translateY }, { scale }],
+        transform: [{ translateY }],
       },
       backdrop: {
         opacity: backdropOpacity,
