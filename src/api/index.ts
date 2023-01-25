@@ -4,14 +4,16 @@ import {
   ChatGptError,
   SendMessageOptions,
   SendMessageParams,
-} from './types';
-import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from './constants';
-import { getHeaders, parseStreamBasedResponse } from './utils';
+} from '../types';
+import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from '../constants';
+import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
+import getChatGptConversationHeaders from '../utils/getChatGptConversationHeaders';
 
 /**
  * Monkey patches fetch to intercept ChatGPT requests and read the JWT
- * It also injects a method in the global scope to send messages to the ChatGPT backend
- * directly from the Webview and stream the response back to RN
+ * It also injects 2 methods in the global scope:
+ * 1. Send messages to the ChatGPT backend directly from the Webview and stream the response back to RN
+ * 2. Remove the theme switcher button from the webview when GPT shows it's at full capacity
  *
  * Note: It'd be cool to define the function in normal JS and
  * use fn.toString() or`${fn}` and wrap it in a IIFE,
@@ -162,7 +164,7 @@ export async function postMessage({
   const res = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: getHeaders(accessToken),
+    headers: getChatGptConversationHeaders(accessToken),
     mode: 'cors',
   });
 
@@ -183,7 +185,7 @@ export async function postMessage({
   }
 
   const rawText = await res.text();
-  const parsedData = parseStreamBasedResponse(rawText);
+  const parsedData = parseStreamedGptResponse(rawText);
 
   if (!parsedData) {
     throw new ChatGptError('ChatGPTResponseError: Unable to parse response');

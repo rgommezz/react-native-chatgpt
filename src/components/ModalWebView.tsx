@@ -6,19 +6,20 @@ import {
   useImperativeHandle,
   useState,
 } from 'react';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppState, useBackHandler } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkIfChatGptIsAtFullCapacityScript,
   injectJavaScriptIntoWebViewBeforeIsLoaded,
   removeThemeSwitcherScript,
-} from './api';
+} from '../api';
 import { WebView as RNWebView } from 'react-native-webview';
-import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
-import { ChatGptError, ChatGptResponse, WebViewEvents } from './types';
-import { parseStreamBasedResponse, wait } from './utils';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useWebViewAnimation } from './hooks';
+import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from '../constants';
+import { ChatGptError, ChatGptResponse, WebViewEvents } from '../types';
+import useWebViewAnimation from '../hooks/useWebViewAnimation';
+import wait from '../utils/wait';
+import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 
 interface PassedProps {
   accessToken: string;
@@ -175,7 +176,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                   }
                 }
                 if (type === 'RAW_PARTIAL_RESPONSE') {
-                  const result = parseStreamBasedResponse(payload);
+                  const result = parseStreamedGptResponse(payload);
                   if (result) {
                     onPartialResponse(result);
                   }

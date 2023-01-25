@@ -5,10 +5,10 @@ import type {
   ChatGptResponse,
   SendMessageOptions,
   StreamMessageParams,
-} from './types';
-import { ChatGptProvider } from './Context';
+} from '../types';
+import { ChatGptProvider } from '../contexts/ChatGptContext';
 import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
-import { getPostMessageWithStreamScript, postMessage } from './api';
+import { getPostMessageWithStreamScript, postMessage } from '../api';
 
 export default function ChatGpt({
   containerStyles,

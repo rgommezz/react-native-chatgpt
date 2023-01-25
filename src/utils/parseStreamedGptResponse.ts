@@ -1,5 +1,3 @@
-import { CHAT_PAGE, HOST_URL, USER_AGENT } from './constants';
-
 /**
  * @see https://stackoverflow.com/a/1144788/4642844
  * @param string
@@ -20,32 +18,13 @@ function replaceAll(str: string, find: string, replace: string) {
 }
 
 /**
- * Returns proper headers for the https://chat.openai.com/backend-api/conversation endpoint
- * @param accessToken
- */
-export function getHeaders(accessToken: string) {
-  return {
-    'accept': 'application/json',
-    'x-openai-assistant-app-id': '',
-    'authorization': accessToken,
-    'content-type': 'application/json',
-    'origin': HOST_URL,
-    'referrer': CHAT_PAGE,
-    ['sec-fetch-mode']: 'cors',
-    ['sec-fetch-site']: 'same-origin',
-    'x-requested-with': 'com.chatgpt3auth',
-    'user-agent': USER_AGENT,
-  };
-}
-
-/**
  * Parses the response from the https://chat.openai.com/backend-api/conversation endpoint
  * The response is of content-type: text/event-stream and not JSON.
  * That's why we need to get the raw text from the response first and parse it manually.
  * The final response is the last chunk of the stream.
  * @param data
  */
-export function parseStreamBasedResponse(data: string) {
+export default function parseStreamedGptResponse(data: string) {
   const chunks = data.split('data: ');
   const sanitizedChunks = chunks
     .map((c) => replaceAll(c, '\n', ''))
@@ -61,8 +40,4 @@ export function parseStreamBasedResponse(data: string) {
     conversationId: response.conversation_id,
     isDone: response.message?.end_turn === true,
   };
-}
-
-export function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

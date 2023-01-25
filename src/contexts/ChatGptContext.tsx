@@ -1,14 +1,14 @@
-import type {
-  ChatGptResponse,
-  SendMessageOptions,
-  StreamMessageParams,
-} from './types';
 import React, {
   createContext,
   PropsWithChildren,
   useContext,
   useMemo,
 } from 'react';
+import type {
+  ChatGptResponse,
+  SendMessageOptions,
+  StreamMessageParams,
+} from '../types';
 
 interface ChatGptContextInterface {
   accessToken: string;

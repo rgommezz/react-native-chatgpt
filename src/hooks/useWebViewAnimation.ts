@@ -6,7 +6,7 @@ interface Arguments {
   onAnimationEnd?: (mode: 'hide' | 'show') => void;
 }
 
-export function useWebViewAnimation({
+export default function useWebViewAnimation({
   onAnimationStart,
   onAnimationEnd,
 }: Arguments) {
