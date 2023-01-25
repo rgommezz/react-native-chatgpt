@@ -6,11 +6,13 @@ const pak = require('../package.json');
 
 const root = path.resolve(__dirname, '..');
 
-const modules = Object.keys({
-  ...pak.peerDependencies,
-});
-
 const defaultConfig = getDefaultConfig(__dirname);
+
+const modules = [
+  '@expo/vector-icons',
+  'expo-constants',
+  ...Object.keys(pak.peerDependencies),
+];
 
 module.exports = {
   ...defaultConfig,
