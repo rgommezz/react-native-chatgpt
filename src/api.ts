@@ -27,6 +27,17 @@ export const injectJavaScriptIntoWebViewBeforeIsLoaded = () => {
       return response;
     };
 
+    window.removeThemeSwitcher = () => {
+      const svgIcon = document.querySelector("button > svg");
+      if (!svgIcon) {
+        return;
+      }
+      const themeSwitchButton = svgIcon.closest('button');
+      if (themeSwitchButton) {
+       themeSwitchButton.remove();
+      }
+    };
+
     window.sendGptMessage = async ({
       accessToken,
       message,
@@ -181,14 +192,30 @@ export async function postMessage({
   return parsedData;
 }
 
+export function removeThemeSwitcherScript() {
+  return `
+    (() => {
+      const _xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
+      const _element = document.evaluate(_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (_element) {
+        window.removeThemeSwitcher();
+      }
+      true;
+    })();
+  `;
+}
+
 export function checkIfChatGptIsAtFullCapacityScript() {
   return `
-    const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
-    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    if (element) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHAT_GPT_FULL_CAPACITY' }));
-    }
+    (() => {
+      const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
+      const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (element) {
+        window.removeThemeSwitcher();
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHAT_GPT_FULL_CAPACITY' }));
+      }
 
-    true;
+      true;
+    })();
   `;
 }

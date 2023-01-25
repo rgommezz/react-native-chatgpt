@@ -11,6 +11,7 @@ import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkIfChatGptIsAtFullCapacityScript,
   injectJavaScriptIntoWebViewBeforeIsLoaded,
+  removeThemeSwitcherScript,
 } from './api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from './constants';
@@ -126,6 +127,20 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
           <RNWebView
             injectedJavaScriptBeforeContentLoaded={injectJavaScriptIntoWebViewBeforeIsLoaded()}
             ref={webviewRef}
+            onLoad={async (event) => {
+              const { url, loading, navigationType } = event.nativeEvent;
+              if (
+                url.startsWith(LOGIN_PAGE) &&
+                status === 'visible' &&
+                !!navigationType &&
+                !loading
+              ) {
+                // Apparently the button is not there yet after this fires, so we wait a bit
+                await wait(32);
+                const script = removeThemeSwitcherScript();
+                webviewRef.current?.injectJavaScript(script);
+              }
+            }}
             style={styles.webview}
             source={{ uri: status === 'hidden' ? CHAT_PAGE : LOGIN_PAGE }}
             onNavigationStateChange={(event) => {
@@ -139,6 +154,9 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
             }}
             userAgent={USER_AGENT}
             sharedCookiesEnabled
+            onContentProcessDidTerminate={() => {
+              webviewRef.current?.reload();
+            }}
             onMessage={(event) => {
               try {
                 const { payload, type } = JSON.parse(
