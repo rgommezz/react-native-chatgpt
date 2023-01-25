@@ -1,6 +1,6 @@
 {
   "name": "react-native-chatgpt",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A ChatGPT React Native wrapper to integrate it with your applications. It handles authentication, streamed responses, and contextual conversations. Fully serverless",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
