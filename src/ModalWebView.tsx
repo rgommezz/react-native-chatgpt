@@ -6,7 +6,7 @@ import {
   useImperativeHandle,
   useState,
 } from 'react';
-import { useAppState } from '@react-native-community/hooks';
+import { useAppState, useBackHandler } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkIfChatGptIsAtFullCapacityScript,
@@ -86,6 +86,16 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
         webviewRef.current?.reload();
       }
     }, [currentAppState, webviewRef]);
+
+    useBackHandler(() => {
+      if (status !== 'hidden') {
+        // Handle it
+        closeModal();
+        return true;
+      }
+      // Let the default thing happen
+      return false;
+    });
 
     function checkIfChatGptIsAtFullCapacity() {
       const script = checkIfChatGptIsAtFullCapacityScript();
