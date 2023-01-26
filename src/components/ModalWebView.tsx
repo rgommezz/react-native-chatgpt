@@ -24,6 +24,7 @@ import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from '../constants';
 import { ChatGptError, ChatGptResponse, WebViewEvents } from '../types';
 import useWebViewAnimation from '../hooks/useWebViewAnimation';
 import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
+import { getStatusText } from '../utils/httpCodes';
 
 interface PassedProps {
   accessToken: string;
@@ -171,8 +172,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 }
                 if (type === 'STREAM_ERROR') {
                   const error = new ChatGptError(
-                    payload?.statusText ||
-                      `ChatGPTResponseStreamError: ${payload?.status}`
+                    getStatusText(payload?.status as any)
                   );
                   error.statusCode = payload?.status;
                   if (error.statusCode === 401) {

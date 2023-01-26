@@ -130,7 +130,7 @@ export const createGlobalFunctionsInWebviewContext = () => {
         clearTimeout(timeoutId);
 
         if (res.status >= 400 && res.status < 600) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, statusText: res.statusText}}));
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status}}));
           return true;
         }
 
