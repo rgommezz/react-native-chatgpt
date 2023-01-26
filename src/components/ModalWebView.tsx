@@ -27,7 +27,7 @@ import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 interface PassedProps {
   accessToken: string;
   onAccessTokenChange: (newAccessToken: string) => void;
-  onPartialResponse: (response: ChatGptResponse) => void;
+  onAccumulatedResponse: (response: ChatGptResponse) => void;
   onStreamError: (error: ChatGptError) => void;
 }
 
@@ -48,7 +48,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     {
       accessToken,
       onAccessTokenChange,
-      onPartialResponse,
+      onAccumulatedResponse,
       onStreamError,
       containerStyles,
       backdropStyles,
@@ -120,14 +120,13 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
           ]}
         >
           <RNWebView
-            injectedJavaScriptBeforeContentLoaded={createGlobalFunctionsInWebviewContext()}
+            injectedJavaScript={createGlobalFunctionsInWebviewContext()}
             ref={onWebviewRefChange}
             onLoad={async (event) => {
-              const { url, loading, navigationType } = event.nativeEvent;
+              const { url, loading } = event.nativeEvent;
               if (
                 url.startsWith(LOGIN_PAGE) &&
                 status === 'visible' &&
-                !!navigationType &&
                 !loading
               ) {
                 removeThemeSwitcher();
@@ -166,10 +165,10 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                     }
                   }
                 }
-                if (type === 'RAW_PARTIAL_RESPONSE') {
+                if (type === 'RAW_ACCUMULATED_RESPONSE') {
                   const result = parseStreamedGptResponse(payload);
                   if (result) {
-                    onPartialResponse(result);
+                    onAccumulatedResponse(result);
                   }
                 }
                 if (type === 'CHAT_GPT_FULL_CAPACITY' && status === 'visible') {

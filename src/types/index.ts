@@ -12,7 +12,7 @@ export class ChatGptError extends Error {
 
 export interface StreamMessageParams {
   message: string;
-  onPartialResponse: (arg: ChatGptResponse) => void;
+  onAccumulatedResponse: (arg: ChatGptResponse) => void;
   options?: SendMessageOptions;
   onError?: (arg: ChatGptError) => void;
 }
@@ -33,7 +33,7 @@ export type WebViewEvents =
       payload: RequestInit;
     }
   | {
-      type: 'RAW_PARTIAL_RESPONSE';
+      type: 'RAW_ACCUMULATED_RESPONSE';
       payload: string;
     }
   | {

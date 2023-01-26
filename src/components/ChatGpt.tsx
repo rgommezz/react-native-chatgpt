@@ -44,16 +44,16 @@ export default function ChatGpt({
       });
     }
 
-    const { message, options, onPartialResponse, onError } = args[0];
+    const { message, options, onAccumulatedResponse, onError } = args[0];
 
-    if (!onPartialResponse) {
+    if (!onAccumulatedResponse) {
       throw new ChatGptError(
-        'onPartialResponse is required for stream based responses.'
+        'onAccumulatedResponse is required for stream based responses.'
       );
     }
 
     // Assigning success and error callbacks to the refs so that they can be called from the webview.
-    callbackRef.current = onPartialResponse;
+    callbackRef.current = onAccumulatedResponse;
     errorCallbackRef.current = onError || (() => null);
 
     return postStreamedMessage({
@@ -79,7 +79,7 @@ export default function ChatGpt({
         ref={modalRef}
         accessToken={accessToken}
         onAccessTokenChange={setAccessToken}
-        onPartialResponse={(result) => callbackRef.current?.(result)}
+        onAccumulatedResponse={(result) => callbackRef.current?.(result)}
         onStreamError={(error) => errorCallbackRef.current?.(error)}
         containerStyles={containerStyles}
         backdropStyles={backdropStyles}

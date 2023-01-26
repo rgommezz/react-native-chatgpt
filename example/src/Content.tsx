@@ -17,8 +17,11 @@ const Content = () => {
     setResponse('...');
     sendMessage({
       message: 'Who is Jeff Bezos?',
-      onPartialResponse: (partial) => {
-        setResponse(partial.message);
+      onAccumulatedResponse: (accumulatedResponse) => {
+        setResponse(accumulatedResponse.message);
+      },
+      onError: (e) => {
+        console.log(e.statusCode, e.message);
       },
     });
   };

@@ -40,7 +40,7 @@ export const createGlobalFunctionsInWebviewContext = () => {
       }
       const themeSwitchButton = svgIcon.closest('button');
       if (themeSwitchButton) {
-       themeSwitchButton.remove();
+        themeSwitchButton.style.display = 'none';
       }
     };
 
@@ -108,13 +108,15 @@ export const createGlobalFunctionsInWebviewContext = () => {
           credentials: "include"
         });
 
+
         if (res.status >= 400 && res.status < 600) {
-          return window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, message: res.statusText}}));
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, message: res.statusText}}));
+          return true;
         }
 
         for await (const chunk of streamAsyncIterable(res.body)) {
           const str = new TextDecoder().decode(chunk);
-          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'RAW_PARTIAL_RESPONSE', payload: str}));
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'RAW_ACCUMULATED_RESPONSE', payload: str}));
         }
       } catch (e) {
         console.log("error", e);
@@ -216,12 +218,13 @@ export function reloadWebView() {
  */
 export async function removeThemeSwitcher() {
   // Apparently the button is not there yet after the page loads, so we wait a bit
-  await wait(100);
+  await wait(200);
+
   const script = `
     (() => {
-      const _xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
-      const _element = document.evaluate(_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      if (_element) {
+      const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
+      const element = document.evaluate(_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (element) {
         window.removeThemeSwitcher();
       }
       true;

@@ -7,7 +7,7 @@
 [![runs with expo](https://img.shields.io/badge/Runs%20with%20Expo-4630EB.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://snack.expo.dev/@rgommezz/react-native-chatgpt)
 
  <p><i>This library allows you to access <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> from React Native to integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
- 
+
 - [Features](#features)
 - [Disclaimer](#disclaimer)
 - [Try it out](#try-it-out)
@@ -90,7 +90,7 @@ const Root = () => {
 
 #### Props
 
-The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT. They are all optional. 
+The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT. They are all optional.
 
 | Name                    | Required | Type                                     | Description                                                                                                                                                                                                                          |
 | ----------------------- | -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -122,7 +122,7 @@ The simplest way to proceed is to listen to `401` or `403` server errors when se
 accessToken: string;
 ```
 
-The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued. 
+The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued.
 
 It will be an empty string until the login flow is completed.
 
@@ -200,7 +200,7 @@ function sendMessage(args: {
     conversationId?: string;
     messageId?: string;
   };
-  onPartialResponse?: (response: {
+  onAccumulatedResponse?: (response: {
     message: string;
     messageId: string;
     conversationId: string;
@@ -210,7 +210,8 @@ function sendMessage(args: {
 }): void;
 ```
 
-It accepts a callback function that will be called when a partial response is available. This version is helpful if you want to show the reply as soon as it's available, similar to the ChatGPT web playground.
+It accepts a callback function that will be constantly invoked with response updates.
+This version is useful for scenarios where the response needs to be displayed as soon as it becomes available, similar to the way the ChatGPT API works on the web playground.
 
 If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
 
@@ -230,7 +231,7 @@ const StreamExample = () => {
   const handleSendMessage = () => {
     sendMessage({
       message: 'Outline possible topics for an SEO article',
-      onPartialResponse: ({ message, isDone }) => {
+      onAccumulatedResponse: ({ message, isDone }) => {
         setResponse(message);
         if (isDone) {
           // The response is complete, you can send another message
