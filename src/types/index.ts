@@ -26,6 +26,7 @@ export interface SendMessageParams extends SendMessageOptions {
   message: string;
   accessToken: string;
   timeout?: number;
+  onTokenExpired?: () => void;
 }
 
 export type WebViewEvents =

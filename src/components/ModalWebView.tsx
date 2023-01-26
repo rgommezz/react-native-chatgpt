@@ -185,6 +185,10 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                       `ChatGPTResponseStreamError: ${payload?.status}`
                   );
                   error.statusCode = payload?.status;
+                  if (error.statusCode === 401) {
+                    // Token expired, notifying
+                    onAccessTokenChange('');
+                  }
                   onStreamError(error);
                 }
               } catch (e) {

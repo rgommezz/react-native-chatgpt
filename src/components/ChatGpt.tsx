@@ -62,6 +62,7 @@ export default function ChatGpt({
         conversationId: options?.conversationId,
         messageId: options?.messageId,
         timeout: requestTimeout,
+        onTokenExpired: () => setAccessToken(''),
       });
     }
 

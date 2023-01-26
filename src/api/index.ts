@@ -179,6 +179,7 @@ export async function postMessage({
   messageId = uuid.v4() as string,
   conversationId = uuid.v4() as string,
   timeout = REQUEST_DEFAULT_TIMEOUT,
+  onTokenExpired,
 }: SendMessageParams): Promise<ChatGptResponse> {
   const controller = new AbortController();
 
@@ -219,6 +220,10 @@ export async function postMessage({
   clearTimeout(timeoutId);
 
   if (res.status >= 400 && res.status < 500) {
+    if (res.status === 401) {
+      // Token expired, notifying
+      onTokenExpired?.();
+    }
     const error = new ChatGptError(
       res.status === 403 || res.status === 401
         ? 'ChatGPTResponseClientError: Your access token may have expired. Please login again.'
