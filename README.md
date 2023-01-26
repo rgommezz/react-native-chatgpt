@@ -6,7 +6,7 @@
 [![license MIT](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/rgommezz/react-native-chatgpt/blob/master/LICENSE)
 [![runs with expo](https://img.shields.io/badge/Runs%20with%20Expo-4630EB.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://snack.expo.dev/@rgommezz/react-native-chatgpt)
 
- <p><i>This library allows you to access <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> from React Native to integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
+ <p><i>This is a React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
 
 - [Features](#features)
 - [Disclaimer](#disclaimer)
@@ -22,10 +22,9 @@
 
 ## Features
 
-- **:fire: Serverless**: no need to use a custom backend to send messages to the chatbot
-- **:zap: Streaming support**: get a response as soon as it's available, similar to the ChatGPT web playground
-- **:speaking_head: Contextual**: keep track of the conversation by sending the `conversationId` and `messageId` along with the message
-- **:atom_symbol: Cross platform**: works on iOS, Android and Web
+- **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend.
+- **:zap: Streaming support**: experience lightning-fast responses as soon as they are available, similar to the ChatGPT web playground
+- **:robot: Contextual**: keep track of the conversation by sending the `conversationId` and `messageId` along with the message
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
 - **:hammer_and_wrench: Type safe**: fully written in TS
 - **:computer: Snack example**: a snack link is provided, so you can try it out in your browser
