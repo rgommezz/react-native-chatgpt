@@ -6,7 +6,7 @@
 [![license MIT](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/rgommezz/react-native-chatgpt/blob/master/LICENSE)
 [![runs with expo](https://img.shields.io/badge/Runs%20with%20Expo-4630EB.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://snack.expo.dev/@rgommezz/react-native-chatgpt)
 
- <p><i>This is a React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
+ <p><i>A React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and contextual conversations.</b> Fully serverless.</i></p>
 
 - [Features](#features)
 - [Disclaimer](#disclaimer)
