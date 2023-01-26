@@ -22,6 +22,7 @@ const Content = () => {
       },
       onError: (e) => {
         console.log(e.statusCode, e.message);
+        setResponse('Error');
       },
     });
   };

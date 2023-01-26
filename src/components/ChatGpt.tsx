@@ -9,13 +9,24 @@ import { ChatGptProvider } from '../contexts/ChatGptContext';
 import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
 import { postMessage, postStreamedMessage } from '../api';
 import usePersistAccessToken from '../hooks/usePersistAccessToken';
+import {
+  REQUEST_DEFAULT_TIMEOUT,
+  STREAMED_REQUEST_DEFAULT_TIMEOUT,
+} from '../constants';
+
+interface TimeoutProps {
+  requestTimeout?: number;
+  streamedRequestTimeout?: number;
+}
 
 export default function ChatGpt({
   containerStyles,
   backdropStyles,
   renderCustomCloseIcon,
+  requestTimeout = REQUEST_DEFAULT_TIMEOUT,
+  streamedRequestTimeout = STREAMED_REQUEST_DEFAULT_TIMEOUT,
   children,
-}: PropsWithChildren<PublicProps>) {
+}: PropsWithChildren<PublicProps & TimeoutProps>) {
   const modalRef = useRef<ModalWebViewMethods>(null);
   const callbackRef = useRef<(arg: ChatGptResponse) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGptError) => void>(() => null);
@@ -50,6 +61,7 @@ export default function ChatGpt({
         message,
         conversationId: options?.conversationId,
         messageId: options?.messageId,
+        timeout: requestTimeout,
       });
     }
 
@@ -70,6 +82,7 @@ export default function ChatGpt({
       message,
       conversationId: options?.conversationId,
       messageId: options?.messageId,
+      timeout: streamedRequestTimeout,
     });
   }
 

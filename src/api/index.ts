@@ -1,6 +1,13 @@
 import uuid from 'react-native-uuid';
 import { ChatGptError, ChatGptResponse, SendMessageParams } from '../types';
-import { CHAT_PAGE, HOST_URL, LOGIN_PAGE, PROMPT_ENDPOINT } from '../constants';
+import {
+  CHAT_PAGE,
+  HOST_URL,
+  LOGIN_PAGE,
+  PROMPT_ENDPOINT,
+  REQUEST_DEFAULT_TIMEOUT,
+  STREAMED_REQUEST_DEFAULT_TIMEOUT,
+} from '../constants';
 import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 import getChatGptConversationHeaders from '../utils/getChatGptConversationHeaders';
 import type { RefObject } from 'react';
@@ -48,7 +55,8 @@ export const createGlobalFunctionsInWebviewContext = () => {
       accessToken,
       message,
       messageId,
-      conversationId
+      conversationId,
+      timeout
     }) => {
 
       async function* streamAsyncIterable(stream) {
@@ -100,17 +108,28 @@ export const createGlobalFunctionsInWebviewContext = () => {
       const headers = getHeaders(accessToken);
 
       try {
+
+        const controller = new AbortController();
+
+        const timeoutId = setTimeout(() => {
+          // Notifying RN that the request timed out
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: 408, statusText: 'Request timed out'}}));
+          controller.abort();
+        }, timeout);
+
         const res = await fetch(url, {
           method: "POST",
           body: JSON.stringify(body),
           headers: headers,
           mode: "cors",
-          credentials: "include"
+          credentials: "include",
+          signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
 
         if (res.status >= 400 && res.status < 600) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, message: res.statusText}}));
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'STREAM_ERROR', payload: {status: res.status, statusText: res.statusText}}));
           return true;
         }
 
@@ -119,7 +138,7 @@ export const createGlobalFunctionsInWebviewContext = () => {
           window.ReactNativeWebView.postMessage(JSON.stringify({type: 'RAW_ACCUMULATED_RESPONSE', payload: str}));
         }
       } catch (e) {
-        console.log("error", e);
+        // Nothing to do here
       }
     };
 
@@ -135,13 +154,15 @@ export function postStreamedMessage({
   message,
   messageId = uuid.v4() as string,
   conversationId = uuid.v4() as string,
+  timeout = STREAMED_REQUEST_DEFAULT_TIMEOUT,
 }: SendMessageParams) {
   const script = `
     window.sendGptMessage({
       accessToken: "${accessToken}",
       message: "${message}",
       messageId: "${messageId}",
-      conversationId: "${conversationId}"
+      conversationId: "${conversationId}",
+      timeout: ${timeout}
     });
 
     true;
@@ -157,7 +178,19 @@ export async function postMessage({
   message,
   messageId = uuid.v4() as string,
   conversationId = uuid.v4() as string,
+  timeout = REQUEST_DEFAULT_TIMEOUT,
 }: SendMessageParams): Promise<ChatGptResponse> {
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    const error = new ChatGptError(
+      'ChatGPTResponseClientError: Request timed out'
+    );
+    error.statusCode = 408;
+    throw error;
+  }, timeout);
+
   const url = PROMPT_ENDPOINT;
   const body = {
     action: 'next',
@@ -180,7 +213,10 @@ export async function postMessage({
     body: JSON.stringify(body),
     headers: getChatGptConversationHeaders(accessToken),
     mode: 'cors',
+    signal: controller.signal,
   });
+
+  clearTimeout(timeoutId);
 
   if (res.status >= 400 && res.status < 500) {
     const error = new ChatGptError(
