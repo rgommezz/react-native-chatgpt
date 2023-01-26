@@ -223,7 +223,7 @@ export async function removeThemeSwitcher() {
   const script = `
     (() => {
       const xpath = "//div[contains(text(),'ChatGPT is at capacity right now')]";
-      const element = document.evaluate(_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
       if (element) {
         window.removeThemeSwitcher();
       }
@@ -267,7 +267,7 @@ export async function retryLogin() {
 export function navigateToLoginPage() {
   const script = `
    (() => {
-      document.location.href = "${LOGIN_PAGE}";
+      window.location.replace("${LOGIN_PAGE}");
    })();
 
    true;

@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useState } from 'react';
 
-const TOKEN_ACCESS_KEY = 'react-native-chatgpt:access_token';
+const TOKEN_ACCESS_KEY = 'react_native_chatgpt_access_token';
 
 interface State {
   isLoaded: boolean;
