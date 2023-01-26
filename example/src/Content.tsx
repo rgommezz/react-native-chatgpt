@@ -1,10 +1,10 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { useChatGpt } from 'react-native-chatgpt';
-import { useState } from 'react';
 
 const Content = () => {
-  const { login, sendMessage, accessToken } = useChatGpt();
+  const { login, sendMessage, status } = useChatGpt();
   const [response, setResponse] = useState('');
 
   const postMessage = async () => {
@@ -30,7 +30,7 @@ const Content = () => {
     <View style={styles.container}>
       <Text style={{ marginBottom: 24 }}>ChatGPT3 Sandbox</Text>
       <Text numberOfLines={3} style={{ marginBottom: 24 }}>
-        Access Token: {accessToken}
+        Status: {status}
       </Text>
       <View style={{ marginBottom: 24 }}>
         <Button title={'Login'} onPress={() => login()} />

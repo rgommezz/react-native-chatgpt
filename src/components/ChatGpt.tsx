@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useRef } from 'react';
 import type {
   ChatGptResponse,
   SendMessageOptions,
@@ -8,6 +8,7 @@ import { ChatGptError } from '../types';
 import { ChatGptProvider } from '../contexts/ChatGptContext';
 import ModalWebView, { ModalWebViewMethods, PublicProps } from './ModalWebView';
 import { postMessage, postStreamedMessage } from '../api';
+import usePersistAccessToken from '../hooks/usePersistAccessToken';
 
 export default function ChatGpt({
   containerStyles,
@@ -19,7 +20,15 @@ export default function ChatGpt({
   const callbackRef = useRef<(arg: ChatGptResponse) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGptError) => void>(() => null);
 
-  const [accessToken, setAccessToken] = useState('');
+  const { isLoaded, setAccessToken, accessToken } = usePersistAccessToken();
+
+  const status = (() => {
+    if (!isLoaded) return 'loading';
+
+    if (!accessToken) return 'logged-out';
+
+    return 'authenticated';
+  })();
 
   const login = useCallback(() => {
     modalRef?.current?.open();
@@ -70,7 +79,7 @@ export default function ChatGpt({
 
   return (
     <ChatGptProvider
-      accessToken={accessToken}
+      status={status}
       login={login}
       sendMessage={memoizedSendMessage}
     >

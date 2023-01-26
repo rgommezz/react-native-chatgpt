@@ -11,7 +11,7 @@ import type {
 } from '../types';
 
 interface ChatGptContextInterface {
-  accessToken: string;
+  status: 'loading' | 'logged-out' | 'authenticated';
   login: () => void;
   sendMessage(
     message: string,
@@ -24,25 +24,19 @@ const ChatGptContext = createContext<ChatGptContextInterface>(
   undefined as unknown as ChatGptContextInterface
 );
 
-interface Props {
-  accessToken: string;
-  login: () => void;
-  sendMessage: ChatGptContextInterface['sendMessage'];
-}
-
 export const ChatGptProvider = ({
-  accessToken,
+  status,
   login,
   sendMessage,
   children,
-}: PropsWithChildren<Props>) => {
+}: PropsWithChildren<ChatGptContextInterface>) => {
   const contextValue = useMemo(
     () => ({
-      accessToken,
+      status,
       login,
       sendMessage,
     }),
-    [accessToken, login, sendMessage]
+    [status, login, sendMessage]
   );
 
   return (

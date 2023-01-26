@@ -1,6 +1,6 @@
 import uuid from 'react-native-uuid';
 import { ChatGptError, ChatGptResponse, SendMessageParams } from '../types';
-import { CHAT_PAGE, HOST_URL, PROMPT_ENDPOINT } from '../constants';
+import { CHAT_PAGE, HOST_URL, LOGIN_PAGE, PROMPT_ENDPOINT } from '../constants';
 import parseStreamedGptResponse from '../utils/parseStreamedGptResponse';
 import getChatGptConversationHeaders from '../utils/getChatGptConversationHeaders';
 import type { RefObject } from 'react';
@@ -227,8 +227,9 @@ export async function removeThemeSwitcher() {
       if (element) {
         window.removeThemeSwitcher();
       }
-      true;
     })();
+
+    true;
   `;
 
   webview?.injectJavaScript(script);
@@ -246,8 +247,9 @@ export function checkFullCapacity() {
         window.removeThemeSwitcher();
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CHAT_GPT_FULL_CAPACITY' }));
       }
-      true;
     })();
+
+    true;
   `;
   webview?.injectJavaScript(script);
 }
@@ -260,4 +262,16 @@ export async function retryLogin() {
   // Waiting 3 seconds before checking again
   await wait(3000);
   checkFullCapacity();
+}
+
+export function navigateToLoginPage() {
+  const script = `
+   (() => {
+      document.location.href = "${LOGIN_PAGE}";
+   })();
+
+   true;
+  `;
+
+  webview?.injectJavaScript(script);
 }
