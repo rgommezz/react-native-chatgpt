@@ -12,7 +12,7 @@ export default function useWebViewAnimation({
 }: Arguments) {
   const animatedValue = useRef(new Animated.Value(0));
   const translateY = animatedValue.current.interpolate({
-    inputRange: [0, 0.75, 1],
+    inputRange: [0, 0.5, 1],
     outputRange: [
       Dimensions.get('window').height,
       Dimensions.get('window').height,
@@ -29,7 +29,7 @@ export default function useWebViewAnimation({
     onAnimationStart?.(mode);
     Animated.timing(animatedValue.current, {
       toValue: mode === 'show' ? 1 : 0,
-      duration: 850,
+      duration: 600,
       useNativeDriver: true,
     }).start(() => {
       onAnimationEnd?.(mode);
