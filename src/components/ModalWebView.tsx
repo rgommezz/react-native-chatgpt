@@ -8,16 +8,16 @@ import {
   useState,
 } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useAppState, useBackHandler } from '@react-native-community/hooks';
+import { useBackHandler } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkFullCapacity,
   createGlobalFunctionsInWebviewContext,
   init,
-  retryLogin,
+  navigateToLoginPage,
   reloadWebView,
   removeThemeSwitcher,
-  navigateToLoginPage,
+  retryLogin,
 } from '../api';
 import { WebView as RNWebView } from 'react-native-webview';
 import { CHAT_PAGE, LOGIN_PAGE, USER_AGENT } from '../constants';
@@ -57,7 +57,6 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     },
     ref
   ) => {
-    const currentAppState = useAppState();
     const [status, setStatus] = useState<'hidden' | 'animating' | 'visible'>(
       'hidden'
     );
@@ -87,14 +86,6 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
         checkFullCapacity();
       }
     }, [status]);
-
-    useEffect(() => {
-      // Every time the app is brought to the foreground,
-      // we reload the webview to avoid 403s from Cloudfare on the chat screen
-      if (currentAppState === 'active' && status === 'hidden') {
-        reloadWebView();
-      }
-    }, [currentAppState, status]);
 
     useBackHandler(() => {
       if (status !== 'hidden') {
@@ -142,9 +133,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 status === 'visible'
               ) {
                 // We have successfully logged in. We can hide the webview now.
-                animateWebView('hide', () => {
-                  navigateToLoginPage();
-                });
+                animateWebView('hide');
               }
             }}
             userAgent={USER_AGENT}
@@ -165,6 +154,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                       const newAuthToken = headers?.Authorization;
                       if (!!newAuthToken && newAuthToken !== accessToken) {
                         onAccessTokenChange(newAuthToken);
+                        navigateToLoginPage();
                       }
                     }
                   }

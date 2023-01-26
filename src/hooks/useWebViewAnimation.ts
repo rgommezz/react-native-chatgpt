@@ -25,7 +25,7 @@ export default function useWebViewAnimation({
     outputRange: [0, 0.5, 0.5],
   });
 
-  const animateWebView = (mode: 'hide' | 'show', onHide?: () => void) => {
+  const animateWebView = (mode: 'hide' | 'show') => {
     onAnimationStart?.(mode);
     Animated.timing(animatedValue.current, {
       toValue: mode === 'show' ? 1 : 0,
@@ -33,7 +33,6 @@ export default function useWebViewAnimation({
       useNativeDriver: true,
     }).start(() => {
       onAnimationEnd?.(mode);
-      onHide?.();
     });
   };
 
