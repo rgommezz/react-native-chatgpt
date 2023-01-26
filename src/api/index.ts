@@ -13,6 +13,7 @@ import getChatGptConversationHeaders from '../utils/getChatGptConversationHeader
 import type { RefObject } from 'react';
 import type WebView from 'react-native-webview';
 import wait from '../utils/wait';
+import { getStatusText } from '../utils/httpCodes';
 
 let webview: RefObject<WebView>['current'];
 
@@ -224,11 +225,8 @@ export async function postMessage({
       // Token expired, notifying
       onTokenExpired?.();
     }
-    const error = new ChatGptError(
-      res.status === 403 || res.status === 401
-        ? 'ChatGPTResponseClientError: Your access token may have expired. Please login again.'
-        : `ChatGPTResponseClientError: ${res.status} ${res.statusText}`
-    );
+
+    const error = new ChatGptError(getStatusText(res.status as any));
     error.statusCode = res.status;
     throw error;
   } else if (res.status >= 500) {

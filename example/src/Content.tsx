@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import { useChatGpt } from 'react-native-chatgpt';
+import { ChatGptError, useChatGpt } from 'react-native-chatgpt';
 
 const Content = () => {
   const { login, sendMessage, status } = useChatGpt();
@@ -9,8 +9,14 @@ const Content = () => {
 
   const postMessage = async () => {
     setResponse('...');
-    const gpt3Response = await sendMessage('Who is Elon Musk?');
-    setResponse(gpt3Response.message);
+    try {
+      const gpt3Response = await sendMessage('Who is Elon Musk?');
+      setResponse(gpt3Response.message);
+    } catch (e) {
+      if (e instanceof ChatGptError) {
+        setResponse(`${e.statusCode}: ${e.message || 'Error'}`);
+      }
+    }
   };
 
   const postStreamBasedMessage = () => {
@@ -21,8 +27,7 @@ const Content = () => {
         setResponse(accumulatedResponse.message);
       },
       onError: (e) => {
-        console.log(e.statusCode, e.message);
-        setResponse('Error');
+        setResponse(`${e.statusCode}: ${e.message || 'Error'}`);
       },
     });
   };
