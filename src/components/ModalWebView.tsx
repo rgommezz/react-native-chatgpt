@@ -188,6 +188,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
           />
           {renderCustomCloseIcon?.(closeModal) || (
             <View style={styles.closeButton}>
+              {/* @ts-ignore */}
               <Icon name="close" color="black" size={32} onPress={closeModal} />
             </View>
           )}

@@ -56,6 +56,7 @@ export const createGlobalFunctionsInWebviewContext = () => {
       accessToken,
       message,
       messageId,
+      newMessageId,
       conversationId,
       timeout
     }) => {
@@ -94,7 +95,7 @@ export const createGlobalFunctionsInWebviewContext = () => {
         action: "next",
         messages: [
           {
-            id: conversationId,
+            id: newMessageId,
             role: "user",
             content: {
               content_type: "text",
@@ -105,6 +106,10 @@ export const createGlobalFunctionsInWebviewContext = () => {
         model: "text-davinci-002-render",
         parent_message_id: messageId,
       };
+
+      if (conversationId) {
+        body.conversation_id = conversationId;
+      }
 
       const headers = getHeaders(accessToken);
 
@@ -154,20 +159,38 @@ export function postStreamedMessage({
   accessToken,
   message,
   messageId = uuid.v4() as string,
-  conversationId = uuid.v4() as string,
+  conversationId,
   timeout = STREAMED_REQUEST_DEFAULT_TIMEOUT,
 }: SendMessageParams) {
-  const script = `
-    window.sendGptMessage({
-      accessToken: "${accessToken}",
-      message: "${message}",
-      messageId: "${messageId}",
-      conversationId: "${conversationId}",
-      timeout: ${timeout}
-    });
+  const newMessageId = uuid.v4() as string;
+  let script = '';
+  if (conversationId) {
+    script = `
+      window.sendGptMessage({
+        accessToken: "${accessToken}",
+        message: "${message}",
+        messageId: "${messageId}",
+        newMessageId: "${newMessageId}",
+        conversationId: "${conversationId}",
+        timeout: ${timeout}
+      });
 
-    true;
-  `;
+      true;
+    `;
+  } else {
+    script = `
+      window.sendGptMessage({
+        accessToken: "${accessToken}",
+        message: "${message}",
+        messageId: "${messageId}",
+        newMessageId: "${newMessageId}",
+        timeout: ${timeout}
+      });
+
+      true;
+    `;
+  }
+
   webview?.injectJavaScript(script);
 }
 
@@ -178,11 +201,12 @@ export async function postMessage({
   accessToken,
   message,
   messageId = uuid.v4() as string,
-  conversationId = uuid.v4() as string,
+  conversationId,
   timeout = REQUEST_DEFAULT_TIMEOUT,
   onTokenExpired,
 }: SendMessageParams): Promise<ChatGptResponse> {
   const controller = new AbortController();
+  const newMessageId = uuid.v4() as string;
 
   const timeoutId = setTimeout(() => {
     controller.abort();
@@ -198,7 +222,7 @@ export async function postMessage({
     action: 'next',
     messages: [
       {
-        id: conversationId,
+        id: newMessageId,
         role: 'user',
         content: {
           content_type: 'text',
@@ -209,6 +233,11 @@ export async function postMessage({
     model: 'text-davinci-002-render',
     parent_message_id: messageId,
   };
+
+  if (conversationId) {
+    // @ts-ignore
+    body.conversation_id = conversationId;
+  }
 
   const res = await fetch(url, {
     method: 'POST',
