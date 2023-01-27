@@ -22,9 +22,9 @@
 
 ## Features
 
-- **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend.
+- **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend
 - **:zap: Streaming support**: experience lightning-fast responses as soon as they are available, similar to the ChatGPT web playground
-- **:robot: Contextual**: keep track of the conversation by sending the `conversationId` and `messageId` along with the message
+- **:robot: Conversational**: ChatGPT remembers what you said earlier. Keep the conversation going by sending the `conversationId` and `messageId` along with the message
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
 - **:hammer_and_wrench: Type safe**: fully written in TS
 - **:computer: Snack example**: a snack link is provided, so you can try it out in your browser
@@ -45,26 +45,27 @@ npm install react-native-chatgpt
 
 ### Expo
 
-You also need to install `react-native-webview`
+You also need to install `react-native-webview` and `expo-secure-store`
 
 ```sh
-npx expo install react-native-webview
+npx expo install react-native-webview expo-secure-store
 ```
 
 No additional steps are needed.
 
 ### Bare React Native apps
 
-You also need to install `react-native-webview` and `react-native-vector-icons`
+You also need to install `react-native-webview`, `react-native-vector-icons` and `expo-secure-store`
 
 ```sh
-npm install react-native-webview react-native-vector-icons
+npm install react-native-webview react-native-vector-icons expo-secure-store
 ```
 
-After the installation completes, you should also follow some additional instructions to set up `react-native-webview` and `react-native-vector-icons` properly.
+After the installation completes, you should also follow some additional instructions to set up the libraries:
 
 - [react-native-webview](https://github.com/react-native-webview/react-native-webview/blob/master/docs/Getting-Started.md)
 - [react-native-vector-icons](https://github.com/oblador/react-native-vector-icons#installation)
+- [expo-secure-store](https://github.com/expo/expo/tree/sdk-47/packages/expo-secure-store#installation-in-bare-react-native-projects)
 
 ## API
 
@@ -89,17 +90,33 @@ const Root = () => {
 
 #### Props
 
-The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT. They are all optional.
+The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT, and timeouts for the chatbot requests.
+
 
 | Name                    | Required | Type                                     | Description                                                                                                                                                                                                                          |
 | ----------------------- | -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `children` | yes       | `React.Node` | Your application component tree  |
 | `containerStyles`       | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the webview container                                                                                                                                                                                         |
 | `backdropStyles`        | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                               |
 | `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default, it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
+| `requestTimeout` | no       | `number` | The maximum amount of time in ms you are willing to wait for a **normal** request before cancelling it, it defaults to 30000 ms |
+| `streamedRequestTimeout` | no       | `number` | The maximum amount of time in ms you are willing to wait for a **streamed-based** request before cancelling it, it defaults to 15000 ms  |
 
 ### `useChatGpt`
 
 The hook returns an object with the following properties:
+
+#### `status`
+
+```ts
+status: 'loading' | 'logged-out' | 'authenticated';
+```
+
+- `loading`: indicates the library is starting up. You shouldn't assume anything regarding the authentication state and wait until this value changes to either `logged-out` or `authenticated`.
+- `logged-out` reflects you either haven't authenticated yet or that your ChatGPT access token has expired
+- `authenticated`: signals you are logged in. Only under this status you will be able to interact with the chat bot.
+
+ChatGPT issues JWT tokens that expire in 7 days, so you would have to reauthenticate approximately once per week. The library will report that by changing the status from `authenticated` to `logged-out`.
 
 #### `login`
 
@@ -109,25 +126,7 @@ function login(): void;
 
 A function that, when executed, opens the modal and triggers the ChatGPT auth flow.
 
-After completion, you will get a JWT access token. This access token has an expiration date of 7 days since it was issued.
-
-It's important to note that this library has no control over the token expiration, and no refresh token is available.
-
-The simplest way to proceed is to listen to `401` or `403` server errors when sending messages and call `login` again once that happens to restart the authentication flow and get a new JWT token.
-
-#### `accessToken`
-
-```ts
-accessToken: string;
-```
-
-The ChatGPT JWT access token. It has an expiration date of 7 days since it was issued.
-
-It will be an empty string until the login flow is completed.
-
-There is no need to send this value along with the messages. It's handled internally by the library. It's exposed here, so you can indicate to your application code whether the authentication flow was successfully completed.
-
-If the application is restarted, the library will restore the token automatically.
+After successful completion, `status` will change from `logged-out` to `authenticated`
 
 #### `sendMessage`
 
@@ -153,7 +152,7 @@ It returns a promise with the response. This is the simplest way to use it, but 
 
 If you want to track the conversation, use the `conversationId` and `messageId` in the response object, and pass them to `sendMessage` again.
 
-If the server rejects the request, a `ChatGptError` will be thrown. A status code of `401` or `403` indicates that the token has expired, and you must re-authenticate.
+If the server rejects the request or the timeout fires, a `ChatGptError` will be thrown.
 
 ```jsx
 import React from 'react';
@@ -179,9 +178,7 @@ const Example = () => {
       );
     } catch (error) {
       if (error instanceof ChatGptError) {
-        // If you get a status code of 401 or 40
-        , your token has expired and you have to call login again
-        console.log(error.message, error.statusCode);
+        // Handle error accordingly
       }
     }
   };
@@ -216,7 +213,8 @@ If you want to track the conversation, use the `conversationId` and `messageId` 
 
 Check the `isDone` property in the response object to detect when the response is complete.
 
-If an error occurs, the `onError` callback is called with a `ChatGptError`. A status code of `401` or `403` indicates that the token has expired, and you must re-authenticate.
+If an error occurs, the `onError` callback is called with a `ChatGptError`.
+
 
 ```jsx
 import React, { useState } from 'react';
@@ -236,6 +234,9 @@ const StreamExample = () => {
           // The response is complete, you can send another message
         }
       },
+      onError: (e) => { 
+        // Handle error accordingly
+      },
     });
   };
 
@@ -247,6 +248,8 @@ const StreamExample = () => {
   );
 };
 ```
+
+:warning: Be aware that ChatGPT backend implements rate limiting. That means if you send too many messages in a row, you may get errors with a 429 status code.
 
 ## Contributing
 
