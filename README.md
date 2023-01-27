@@ -116,7 +116,7 @@ status: 'loading' | 'logged-out' | 'authenticated';
 - `logged-out` reflects you either haven't authenticated yet or that your ChatGPT access token has expired
 - `authenticated`: signals you are logged in. Only under this status you will be able to interact with the chat bot.
 
-ChatGPT issues JWT tokens that expire in 7 days, so you would have to reauthenticate approximately once per week.
+ChatGPT issues JWT tokens that expire in 7 days, so you would have to reauthenticate approximately once per week. The library will report that by changing the status from `authenticated` to `logged-out`.
 
 #### `login`
 
@@ -248,6 +248,8 @@ const StreamExample = () => {
   );
 };
 ```
+
+:warning: Be aware that ChatGPT backend implements rate limiting. That means if you send too many messages in a row, you may get errors with a 429 status code.
 
 ## Contributing
 
