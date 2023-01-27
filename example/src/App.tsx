@@ -1,11 +1,14 @@
 import * as React from 'react';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { ChatGptProvider } from 'react-native-chatgpt';
-import Content from './Content';
+import Navigator from './Navigator';
 
 export default function App() {
   return (
-    <ChatGptProvider>
-      <Content />
-    </ChatGptProvider>
+    <PaperProvider>
+      <ChatGptProvider>
+        <Navigator />
+      </ChatGptProvider>
+    </PaperProvider>
   );
 }
