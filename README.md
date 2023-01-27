@@ -24,7 +24,7 @@
 
 - **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend
 - **:zap: Streaming support**: experience lightning-fast responses as soon as they are available, similar to the ChatGPT web playground
-- **:robot: Conversational**: ChatGPT remembers what you said earlier. Keep track of the conversation by sending the `conversationId` and `messageId` along with the message
+- **:robot: Conversational**: ChatGPT remembers what you said earlier. Keep the conversation going by sending the `conversationId` and `messageId` along with the message
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
 - **:hammer_and_wrench: Type safe**: fully written in TS
 - **:computer: Snack example**: a snack link is provided, so you can try it out in your browser
