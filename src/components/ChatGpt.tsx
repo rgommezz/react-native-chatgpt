@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useRef } from 'react';
+import React, { PropsWithChildren, useCallback, useRef, useState } from 'react';
 import type {
   ChatGptResponse,
   SendMessageOptions,
@@ -30,13 +30,15 @@ export default function ChatGpt({
   const modalRef = useRef<ModalWebViewMethods>(null);
   const callbackRef = useRef<(arg: ChatGptResponse) => void>(() => null);
   const errorCallbackRef = useRef<(arg: ChatGptError) => void>(() => null);
-
+  const [isWaitingForJWT, setIsWaitingForJWT] = useState(false);
   const { isLoaded, setAccessToken, accessToken } = usePersistAccessToken();
 
   const status = (() => {
-    if (!isLoaded) return 'loading';
+    if (!isLoaded) return 'initializing';
 
-    if (!accessToken) return 'logged-out';
+    if (isWaitingForJWT) return 'getting_auth_token';
+
+    if (!accessToken && !isWaitingForJWT) return 'logged-out';
 
     return 'authenticated';
   })();
@@ -107,7 +109,11 @@ export default function ChatGpt({
       <ModalWebView
         ref={modalRef}
         accessToken={accessToken}
-        onAccessTokenChange={setAccessToken}
+        onLoginCompleted={() => setIsWaitingForJWT(true)}
+        onAccessTokenChange={(token) => {
+          setIsWaitingForJWT(false);
+          setAccessToken(token);
+        }}
         onAccumulatedResponse={(result) => callbackRef.current?.(result)}
         onStreamError={(error) => errorCallbackRef.current?.(error)}
         containerStyles={containerStyles}

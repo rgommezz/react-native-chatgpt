@@ -19,7 +19,6 @@
 - [Credits](#credits)
 - [License](#license)
 
-
 ## Features
 
 - **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend
@@ -92,15 +91,14 @@ const Root = () => {
 
 The following `ChatGptProvider` props allow you to customize the appearance of the modal that handles the authentication with ChatGPT, and timeouts for the chatbot requests.
 
-
-| Name                    | Required | Type                                     | Description                                                                                                                                                                                                                          |
-| ----------------------- | -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `children` | yes       | `React.Node` | Your application component tree  |
-| `containerStyles`       | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the webview container                                                                                                                                                                                         |
-| `backdropStyles`        | no       | `StyleProp<ViewStyle>`                                 | Extra style applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                               |
-| `renderCustomCloseIcon` | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default, it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
-| `requestTimeout` | no       | `number` | The maximum amount of time in ms you are willing to wait for a **normal** request before cancelling it, it defaults to 30000 ms |
-| `streamedRequestTimeout` | no       | `number` | The maximum amount of time in ms you are willing to wait for a **streamed-based** request before cancelling it, it defaults to 15000 ms  |
+| Name                     | Required | Type                                     | Description                                                                                                                                                                                                                             |
+| ------------------------ | -------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `children`               | yes      | `React.Node`                             | Your application component tree                                                                                                                                                                                                         |
+| `containerStyles`        | no       | `StyleProp<ViewStyle>`                   | Extra style applied to the webview container                                                                                                                                                                                            |
+| `backdropStyles`         | no       | `StyleProp<ViewStyle>`                   | Extra style applied to the backdrop view. By default it uses a semi-transparent background color `rgba(0, 0, 0, 0.5)`                                                                                                                   |
+| `renderCustomCloseIcon`  | no       | `(closeModal: () => void) => React.Node` | A custom close button renderer to be placed on top of the webview. By default, it renders a black cross (X) on the top right corner. Don't forget to **hook up the closeModal function** provided as argument with your `onPress` event |
+| `requestTimeout`         | no       | `number`                                 | The maximum amount of time in ms you are willing to wait for a **normal** request before cancelling it, it defaults to 30000 ms                                                                                                         |
+| `streamedRequestTimeout` | no       | `number`                                 | The maximum amount of time in ms you are willing to wait for a **streamed-based** request before cancelling it, it defaults to 15000 ms                                                                                                 |
 
 ### `useChatGpt`
 
@@ -109,11 +107,12 @@ The hook returns an object with the following properties:
 #### `status`
 
 ```ts
-status: 'loading' | 'logged-out' | 'authenticated';
+status: 'initializing' | 'logged-out' | 'getting_auth_token' | 'authenticated';
 ```
 
-- `loading`: indicates the library is starting up. You shouldn't assume anything regarding the authentication state and wait until this value changes to either `logged-out` or `authenticated`.
+- `initializing`: indicates the library is starting up. You shouldn't assume anything regarding the authentication state and wait until this value changes to either `logged-out` or `authenticated`.
 - `logged-out` reflects you either haven't authenticated yet or that your ChatGPT access token has expired
+- `getting_auth_token`: transitory state that lasts for a few seconds right after the login modal is dismissed. It reflects the fact that the library is getting a ChatGPT auth token in the background. You can use this status to render a loading indicator.
 - `authenticated`: signals you are logged in. Only under this status you will be able to interact with the chat bot.
 
 ChatGPT issues JWT tokens that expire in 7 days, so you would have to reauthenticate approximately once per week. The library will report that by changing the status from `authenticated` to `logged-out`.
@@ -126,7 +125,7 @@ function login(): void;
 
 A function that, when executed, opens the modal and triggers the ChatGPT auth flow.
 
-After successful completion, `status` will change from `logged-out` to `authenticated`
+After successful completion, `status` will change from `logged-out` to `getting_auth_token` (for a few seconds) and finally to `authenticated`
 
 #### `sendMessage`
 
@@ -215,7 +214,6 @@ Check the `isDone` property in the response object to detect when the response i
 
 If an error occurs, the `onError` callback is called with a `ChatGptError`.
 
-
 ```jsx
 import React, { useState } from 'react';
 import { Button } from 'react-native';
@@ -234,7 +232,7 @@ const StreamExample = () => {
           // The response is complete, you can send another message
         }
       },
-      onError: (e) => { 
+      onError: (e) => {
         // Handle error accordingly
       },
     });
@@ -265,4 +263,3 @@ See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the 
 MIT © [Raul Gomez Acuna](https://raulgomez.io/)
 
 If you found this project interesting, please consider following me on [twitter](https://twitter.com/rgommezz)
-

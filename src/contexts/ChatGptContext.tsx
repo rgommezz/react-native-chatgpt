@@ -11,7 +11,11 @@ import type {
 } from '../types';
 
 interface ChatGptContextInterface {
-  status: 'loading' | 'logged-out' | 'authenticated';
+  status:
+    | 'initializing'
+    | 'getting_auth_token'
+    | 'logged-out'
+    | 'authenticated';
   login: () => void;
   flush: () => void;
   sendMessage(

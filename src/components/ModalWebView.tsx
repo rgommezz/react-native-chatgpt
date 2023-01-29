@@ -28,6 +28,7 @@ import { getStatusText } from '../utils/httpCodes';
 
 interface PassedProps {
   accessToken: string;
+  onLoginCompleted: () => void;
   onAccessTokenChange: (newAccessToken: string) => void;
   onAccumulatedResponse: (response: ChatGptResponse) => void;
   onStreamError: (error: ChatGptError) => void;
@@ -49,6 +50,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
   (
     {
       accessToken,
+      onLoginCompleted,
       onAccessTokenChange,
       onAccumulatedResponse,
       onStreamError,
@@ -147,6 +149,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                 status === 'visible'
               ) {
                 // We have successfully logged in. We can hide the webview now.
+                onLoginCompleted();
                 animateWebView('hide');
               }
             }}
