@@ -32,7 +32,7 @@ const Chat = () => {
   const conversationId = useRef('');
 
   useEffect(() => {
-    setMessages([createBotMessage('Ask me anything')]);
+    setMessages([createBotMessage('Ask me anything :)')]);
   }, []);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ const Chat = () => {
           });
         },
         onError: (e) => {
-          setErrorMessage(e.message);
+          setErrorMessage(`${e.statusCode} ${e.message}`);
           setMessages((previousMessages) => {
             const newMessages = [...previousMessages];
             // @ts-ignore

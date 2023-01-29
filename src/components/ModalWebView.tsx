@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useBackHandler } from '@react-native-community/hooks';
+import { useBackHandler, useAppState } from '@react-native-community/hooks';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   checkFullCapacity,
@@ -58,6 +58,7 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
     },
     ref
   ) => {
+    const appState = useAppState();
     const [status, setStatus] = useState<'hidden' | 'animating' | 'visible'>(
       'hidden'
     );
@@ -87,6 +88,18 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
         checkFullCapacity();
       }
     }, [status]);
+
+    const getCurrentStatus = () => status;
+
+    useEffect(() => {
+      const currentStatus = getCurrentStatus();
+      if (appState === 'active' && currentStatus === 'hidden') {
+        // Proactively reload the webview when the app is foregrounded
+        // to refresh the CloudFare session cookies.
+        reloadWebView();
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [appState]);
 
     useBackHandler(() => {
       if (status !== 'hidden') {
@@ -178,6 +191,9 @@ const ModalWebView = forwardRef<ModalWebViewMethods, Props>(
                   if (error.statusCode === 401) {
                     // Token expired, notifying
                     onAccessTokenChange('');
+                  } else if (error.statusCode === 403) {
+                    // CloudFare Session expired, reloading Web View
+                    reloadWebView();
                   }
                   onStreamError(error);
                 }

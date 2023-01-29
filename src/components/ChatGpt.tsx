@@ -45,6 +45,11 @@ export default function ChatGpt({
     modalRef?.current?.open();
   }, []);
 
+  const flush = useCallback(() => {
+    setAccessToken('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function sendMessage(
     message: string,
     options?: SendMessageOptions
@@ -95,6 +100,7 @@ export default function ChatGpt({
     <ChatGptProvider
       status={status}
       login={login}
+      flush={flush}
       sendMessage={memoizedSendMessage}
     >
       {children}

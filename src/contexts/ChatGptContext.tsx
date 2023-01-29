@@ -13,6 +13,7 @@ import type {
 interface ChatGptContextInterface {
   status: 'loading' | 'logged-out' | 'authenticated';
   login: () => void;
+  flush: () => void;
   sendMessage(
     message: string,
     options?: SendMessageOptions
@@ -27,6 +28,7 @@ const ChatGptContext = createContext<ChatGptContextInterface>(
 export const ChatGptProvider = ({
   status,
   login,
+  flush,
   sendMessage,
   children,
 }: PropsWithChildren<ChatGptContextInterface>) => {
@@ -35,8 +37,9 @@ export const ChatGptProvider = ({
       status,
       login,
       sendMessage,
+      flush,
     }),
-    [status, login, sendMessage]
+    [status, login, sendMessage, flush]
   );
 
   return (

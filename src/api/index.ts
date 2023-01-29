@@ -253,6 +253,9 @@ export async function postMessage({
     if (res.status === 401) {
       // Token expired, notifying
       onTokenExpired?.();
+    } else if (res.status === 403) {
+      // Session expired, reloading Web View
+      reloadWebView();
     }
 
     const error = new ChatGptError(getStatusText(res.status as any));
