@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useChatGpt } from 'react-native-chatgpt';
-import Content from './Content';
+import Chat from './Chat';
 import Login from './Login';
 
 const Navigator: React.FC = () => {
@@ -12,7 +12,7 @@ const Navigator: React.FC = () => {
     return <Login />;
   }
 
-  return <Content />;
+  return <Chat />;
 };
 
 export default Navigator;

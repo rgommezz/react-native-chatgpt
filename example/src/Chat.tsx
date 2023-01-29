@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
 import { useChatGpt } from 'react-native-chatgpt';
 import { Snackbar } from 'react-native-paper';
+import { Dimensions, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CHAT_GPT_THUMBNAIL_URL =
   'https://styles.redditmedia.com/t5_7hqomg/styles/communityIcon_yyc98alroh5a1.jpg?width=256&s=cb48e1046acd79d1cc52b59b34ae56b0c1a9b4b8';
@@ -21,17 +23,13 @@ const createBotMessage = (text: string) => {
   };
 };
 
-const Content = () => {
+const Chat = () => {
   const { sendMessage } = useChatGpt();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<IMessage[]>([]);
+  const [errorMessage, setErrorMessage] = useState('');
   const messageId = useRef('');
   const conversationId = useRef('');
-
-  const [isSnackbarVisible, setSnackbarVisible] = useState(false);
-
-  const onToggleSnackBar = () => setSnackbarVisible(!isSnackbarVisible);
-
-  const onDismissSnackBar = () => setSnackbarVisible(false);
 
   useEffect(() => {
     setMessages([createBotMessage('Ask me anything')]);
@@ -77,8 +75,16 @@ const Content = () => {
           });
         },
         onError: (e) => {
-          console.log('error', e);
-          onToggleSnackBar();
+          setErrorMessage(e.message);
+          setMessages((previousMessages) => {
+            const newMessages = [...previousMessages];
+            // @ts-ignore
+            newMessages[0] = {
+              ...previousMessages[0],
+              text: "Sorry, I couldn't process your request",
+            };
+            return newMessages;
+          });
         },
       });
     }
@@ -92,7 +98,7 @@ const Content = () => {
   }, []);
 
   return (
-    <>
+    <View style={styles.container}>
       <GiftedChat
         messages={messages}
         onSend={onSend}
@@ -101,15 +107,30 @@ const Content = () => {
         }}
       />
       <Snackbar
-        visible={isSnackbarVisible}
-        onDismiss={onDismissSnackBar}
-        style={{ backgroundColor: 'red' }}
+        visible={!!errorMessage}
+        onDismiss={() => setErrorMessage('')}
+        style={[
+          styles.snackbar,
+          { top: -Dimensions.get('window').height + insets.top + 32 },
+        ]}
         duration={3000}
       >
-        Sorry, an error occurred
+        {errorMessage}
       </Snackbar>
-    </>
+    </View>
   );
 };
 
-export default Content;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  snackbar: {
+    backgroundColor: 'red',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
+});
+
+export default Chat;
