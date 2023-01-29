@@ -7,6 +7,9 @@
 [![runs with expo](https://img.shields.io/badge/Runs%20with%20Expo-4630EB.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://snack.expo.dev/@rgommezz/react-native-chatgpt)
 
  <p><i>A React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and keeping track of conversations.</b> Fully serverless.</i></p>
+ 
+ https://user-images.githubusercontent.com/4982414/215356661-c81552d4-27f1-4b64-abd4-129bc6808c0a.mp4
+
 
 - [Features](#features)
 - [Disclaimer](#disclaimer)
