@@ -6,7 +6,7 @@
 [![license MIT](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/rgommezz/react-native-chatgpt/blob/master/LICENSE)
 [![runs with expo](https://img.shields.io/badge/Runs%20with%20Expo-4630EB.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000)](https://snack.expo.dev/@rgommezz/react-native-chatgpt)
 
- <p><i>A React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and keeping track of conversations.</b> Fully serverless.</i></p>
+ <p><i>A React Native wrapper around <a href="https://openai.com/blog/chatgpt">ChatGPT</a> by <a href="https://openai.com">OpenAI</a> to seamlessly integrate it with your applications. <b>It handles authentication, streamed responses, and keeping track of conversations. All without the need of a server.</b></i></p>
  
  https://user-images.githubusercontent.com/4982414/215356661-c81552d4-27f1-4b64-abd4-129bc6808c0a.mp4
 
@@ -24,7 +24,7 @@
 
 ## Features
 
-- **:fire: Serverless**: you can easily integrate a powerful chatbot into your app without the need for a custom backend
+- **:fire: 100% client-side**: you can easily integrate a powerful chatbot into your app without the need for a custom backend
 - **:zap: Streaming support**: experience lightning-fast responses as soon as they are available, similar to the ChatGPT web playground
 - **:robot: Conversational**: ChatGPT remembers what you said earlier. Keep the conversation going by sending the `conversationId` and `messageId` along with the message
 - **:iphone: Expo compatible**: no need to eject to enjoy this component
